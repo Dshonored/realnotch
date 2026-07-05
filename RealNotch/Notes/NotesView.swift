@@ -22,7 +22,7 @@ struct NotesView: View {
                 _ = notes.add()
             } label: {
                 HStack(spacing: 6) {
-                    Text("＋").font(theme.font(theme.typography.titleSize))
+                    Image(systemName: "plus").font(.system(size: 11, weight: .semibold))
                     Text("New note").font(theme.font(theme.typography.itemSize))
                 }
                 .foregroundStyle(Color(hex: theme.colors.textSecondary))

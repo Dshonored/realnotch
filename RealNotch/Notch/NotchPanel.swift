@@ -55,8 +55,12 @@ struct NotchPanel: View {
 
     private func tabPill(_ tab: NotchTab) -> some View {
         let active = appState.tab == tab
-        return Text("\(tab.glyph) \(tab.title)")
-            .font(theme.font(theme.typography.itemSize, weight: .semibold))
+        return HStack(spacing: 5) {
+            Image(systemName: tab.symbol)
+                .font(.system(size: 11, weight: .semibold))
+            Text(tab.title)
+                .font(theme.font(theme.typography.itemSize, weight: .semibold))
+        }
             .foregroundStyle(active
                 ? Color(hex: theme.colors.textPrimary)
                 : Color(hex: theme.colors.textSecondary))
@@ -94,7 +98,11 @@ struct NotchPanel: View {
 
     private var footer: some View {
         HStack(spacing: 9) {
-            Text("🌙").font(.system(size: 14))
+            Image(systemName: caffeine.isActive ? "moon.fill" : "moon")
+                .font(.system(size: 14))
+                .foregroundStyle(caffeine.isActive
+                    ? Color(hex: "#30D158FF")
+                    : Color(hex: theme.colors.textSecondary))
             VStack(alignment: .leading, spacing: 1) {
                 Text("Keep Awake")
                     .font(theme.font(theme.typography.itemSize, weight: .semibold))
@@ -106,7 +114,9 @@ struct NotchPanel: View {
             Spacer()
             awakeToggle
             Button(action: openSettings) {
-                Text("⚙️").font(.system(size: 13))
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(hex: theme.colors.textSecondary))
                     .frame(width: 30, height: 30)
                     .background(RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(0.07)))
             }

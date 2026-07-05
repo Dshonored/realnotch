@@ -13,11 +13,12 @@ enum NotchTab: String, CaseIterable, Identifiable {
         }
     }
 
-    var glyph: String {
+    /// SF Symbol name for the tab.
+    var symbol: String {
         switch self {
-        case .clipboard: "📋"
-        case .music: "♪"
-        case .notes: "🗒"
+        case .clipboard: "doc.on.clipboard"
+        case .music: "music.note"
+        case .notes: "note.text"
         }
     }
 }

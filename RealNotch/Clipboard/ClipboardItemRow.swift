@@ -65,17 +65,18 @@ struct ClipboardItemRow: View {
     }
 
     private var iconChip: some View {
-        Text(iconGlyph)
-            .font(.system(size: 12))
+        Image(systemName: iconSymbol)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(.white)
             .frame(width: 26, height: 26)
             .background(RoundedRectangle(cornerRadius: 7).fill(iconColor))
     }
 
-    private var iconGlyph: String {
+    private var iconSymbol: String {
         switch item.content {
-        case .text: "📄"
-        case .image: "🖼"
-        case .fileURLs: "🔗"
+        case .text: "text.alignleft"
+        case .image: "photo"
+        case .fileURLs: "link"
         }
     }
 

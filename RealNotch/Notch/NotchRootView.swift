@@ -95,7 +95,10 @@ private struct NotchContainer: View {
     @ViewBuilder
     private var toast: some View {
         if let label = copyToast {
-            Text("\(label) ✓")
+            HStack(spacing: 4) {
+                Text(label)
+                Image(systemName: "checkmark")
+            }
                 .font(theme.font(theme.typography.captionSize, weight: .bold))
                 .foregroundStyle(Color(hex: "#08210FFF"))
                 .padding(.horizontal, 13)

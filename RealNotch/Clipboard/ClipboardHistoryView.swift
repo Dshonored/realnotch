@@ -16,13 +16,16 @@ struct ClipboardHistoryView: View {
                 Spacer()
                 if !clipboard.stack.isEmpty {
                     Button { clipboard.copyStack(); onCopy("Stacked") } label: {
-                        Text("📎 \(clipboard.stack.count) stacked")
-                            .font(theme.font(theme.typography.captionSize, weight: .semibold))
-                            .foregroundStyle(Color(hex: theme.colors.accent))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(Color(hex: theme.colors.accent).opacity(0.16))
-                            .clipShape(.capsule)
+                        HStack(spacing: 4) {
+                            Image(systemName: "paperclip")
+                            Text("\(clipboard.stack.count) stacked")
+                        }
+                        .font(theme.font(theme.typography.captionSize, weight: .semibold))
+                        .foregroundStyle(Color(hex: theme.colors.accent))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(Color(hex: theme.colors.accent).opacity(0.16))
+                        .clipShape(.capsule)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Copy \(clipboard.stack.count) stacked items")
