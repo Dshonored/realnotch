@@ -1,13 +1,12 @@
 import AppKit
 import SwiftUI
 
-/// Opens the SwiftUI `Settings` scene from outside the scene graph (our panel is a
-/// hosted NSPanel, so `@Environment(\.openSettings)` is a no-op here).
+/// Opens our AppKit-owned settings window. `@Environment(\.openSettings)` and the
+/// `showSettingsWindow:` selector are both no-ops from a hosted NSPanel outside the
+/// scene graph, so we drive an NSWindow we control directly.
+@MainActor
 func openAppSettings() {
-    NSApplication.shared.activate(ignoringOtherApps: true)
-    if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
-        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-    }
+    (NSApp.delegate as? AppDelegate)?.settingsController?.show()
 }
 
 /// Root of the notch panel. Injects the current theme and holds all feature stores.
