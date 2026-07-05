@@ -5,13 +5,20 @@ import SwiftUI
 /// without stealing focus from the frontmost app. The panel is always sized to the
 /// max expanded frame; SwiftUI animates the visible shape inside it, and
 /// NSHostingView passes clicks through wherever no SwiftUI content is hit.
+/// A borderless non-activating panel that can still become key — required so
+/// TextFields (Notes) accept keyboard input when the user clicks into them.
+private final class KeyablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
 final class NotchWindowController {
     static let panelSize = NSSize(width: 640, height: 500)
 
     private let panel: NSPanel
 
     init<Content: View>(content: Content) {
-        panel = NSPanel(
+        panel = KeyablePanel(
             contentRect: NSRect(origin: .zero, size: Self.panelSize),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,

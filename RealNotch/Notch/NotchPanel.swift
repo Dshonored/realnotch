@@ -8,6 +8,9 @@ struct NotchPanel: View {
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
     let width: CGFloat
+    /// Reserved for the physical notch — content starts below it so the header
+    /// (tabs) isn't hidden behind the hardware notch on notch Macs.
+    let notchHeight: CGFloat
     let onCopy: (String) -> Void
     let openSettings: () -> Void
 
@@ -15,6 +18,7 @@ struct NotchPanel: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            Color.clear.frame(height: notchHeight)
             header
             divider
             sectionBody

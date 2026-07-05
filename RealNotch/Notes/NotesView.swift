@@ -1,4 +1,11 @@
+import AppKit
 import SwiftUI
+
+/// The panel is a non-activating accessory window; keyboard input requires the app
+/// to be active and the panel key. Call this when the user starts editing.
+func activateForEditing() {
+    NSApplication.shared.activate(ignoringOtherApps: true)
+}
 
 struct NotesView: View {
     @Bindable var notes: NotesStore
@@ -11,6 +18,7 @@ struct NotesView: View {
             }
 
             Button {
+                activateForEditing()
                 _ = notes.add()
             } label: {
                 HStack(spacing: 6) {
@@ -53,6 +61,7 @@ private struct NoteCard: View {
                     .textFieldStyle(.plain)
                     .font(theme.font(theme.typography.itemSize, weight: .semibold))
                     .foregroundStyle(Color(hex: theme.colors.textPrimary))
+                    .simultaneousGesture(TapGesture().onEnded { activateForEditing() })
                     .onChange(of: title) { persist() }
 
                 Button { store.togglePin(note) } label: {
@@ -78,6 +87,7 @@ private struct NoteCard: View {
                 .lineLimit(1...4)
                 .font(theme.font(theme.typography.captionSize))
                 .foregroundStyle(Color(hex: theme.colors.textSecondary))
+                .simultaneousGesture(TapGesture().onEnded { activateForEditing() })
                 .onChange(of: noteBody) { persist() }
         }
         .padding(11)

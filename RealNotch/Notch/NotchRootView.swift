@@ -58,7 +58,8 @@ private struct NotchContainer: View {
                 NotchPanel(
                     appState: appState, clipboard: clipboard, notes: notes,
                     nowPlaying: nowPlaying, caffeine: caffeine,
-                    width: expandedWidth, onCopy: showToast, openSettings: { openSettings() }
+                    width: expandedWidth, notchHeight: notchHeight,
+                    onCopy: showToast, openSettings: { openSettings() }
                 )
                 .shadow(color: Color(hex: "#30D158FF").opacity(glow ? 0.5 : 0), radius: glow ? 26 : 0)
                 .overlay(alignment: .top) { toast }
@@ -101,7 +102,7 @@ private struct NotchContainer: View {
                 .padding(.vertical, 5)
                 .background(Capsule().fill(Color(hex: "#30D158FF")))
                 .shadow(color: Color(hex: "#30D158FF").opacity(0.55), radius: 12, y: 4)
-                .offset(y: -6)
+                .offset(y: notchHeight + 4)
                 .transition(.move(edge: .top).combined(with: .opacity))
         }
     }
