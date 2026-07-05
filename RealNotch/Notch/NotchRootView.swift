@@ -20,37 +20,51 @@ private struct NotchContainer: View {
 
     private let expandedWidth: CGFloat = 480
     private let expandedHeight: CGFloat = 340
+    private let topFlare: CGFloat = 8
 
-    private var geometry: (width: CGFloat, height: CGFloat) {
-        let notch = NotchDetector.detect()
-        return (notch?.notchWidth ?? 200, notch?.notchHeight ?? 32)
+    // Detected once per view identity — NEVER per frame. NSScreen queries during
+    // an animation tank the frame rate. The panel repositions itself on screen
+    // changes; a stale width here only mis-sizes the collapsed state briefly.
+    private let notchWidth: CGFloat
+    private let notchHeight: CGFloat
+
+    init(appState: AppState, clipboard: ClipboardStore) {
+        self.appState = appState
+        self.clipboard = clipboard
+        let g = NotchDetector.detect()
+        notchWidth = g?.notchWidth ?? 200
+        notchHeight = g?.notchHeight ?? 32
     }
 
     var body: some View {
         let expanded = appState.isExpanded
-        let width = expanded ? expandedWidth : geometry.width
-        let height = expanded ? expandedHeight : geometry.height
+        // +2*topFlare so the flat part of the shape still spans the hardware notch.
+        let width = expanded ? expandedWidth : notchWidth + 2 * topFlare
+        let height = expanded ? expandedHeight : notchHeight
         let radius = expanded ? theme.shape.panelCornerRadius : theme.shape.notchCornerRadius
+        let shape = NotchShape(bottomRadius: radius, topRadius: topFlare)
 
         ZStack(alignment: .top) {
-            if theme.material.blur != "none", expanded {
-                NotchShape(bottomRadius: radius)
-                    .fill(theme.material.blur == "thin" ? Material.ultraThinMaterial : .regularMaterial)
-            }
-            NotchShape(bottomRadius: radius)
+            // Always in the hierarchy — inserting/removing views mid-animation
+            // causes visible ghosting. Animate opacity instead.
+            shape
+                .fill(theme.material.blur == "thin" ? Material.ultraThinMaterial : .regularMaterial)
+                .opacity(theme.material.blur == "none" || !expanded ? 0 : 1)
+            shape
                 .fill(Color(hex: theme.colors.background)
                     .opacity(expanded ? theme.material.backgroundOpacity : 1))
 
-            if expanded {
-                ClipboardHistoryView(clipboard: clipboard)
-                    .padding(.top, geometry.height)
-                    .transition(.opacity)
-            }
+            ClipboardHistoryView(clipboard: clipboard)
+                .padding(.top, notchHeight)
+                .frame(width: expandedWidth, height: expandedHeight, alignment: .top)
+                .opacity(expanded ? 1 : 0)
+                .allowsHitTesting(expanded)
         }
         .frame(width: width, height: height)
-        .contentShape(NotchShape(bottomRadius: radius))
+        .clipShape(shape)
+        .contentShape(shape)
         .onHover { hovering in
-            withAnimation(theme.spring) { appState.isExpanded = hovering }
+            appState.isExpanded = hovering
         }
         .animation(theme.spring, value: expanded)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

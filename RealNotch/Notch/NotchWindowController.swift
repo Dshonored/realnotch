@@ -24,8 +24,12 @@ final class NotchWindowController {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         panel.isMovable = false
         panel.hidesOnDeactivate = false
+        panel.animationBehavior = .none
 
         let hosting = NSHostingView(rootView: content)
+        // Layer-backed so the spring composites on the GPU instead of
+        // redrawing the transparent window backing store every frame.
+        hosting.wantsLayer = true
         hosting.frame = NSRect(origin: .zero, size: Self.panelSize)
         panel.contentView = hosting
 
