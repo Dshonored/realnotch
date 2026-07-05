@@ -8,6 +8,8 @@ struct SettingsView: View {
 
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var maxItems = 200
+    @AppStorage("openOnHover") private var openOnHover = true
+    @AppStorage("hoverDelayMs") private var hoverDelayMs = 300
 
     var body: some View {
         Form {
@@ -29,6 +31,20 @@ struct SettingsView: View {
                     .onChange(of: maxItems) { clipboard.maxItems = maxItems }
 
                 Button("Clear History") { clipboard.clear() }
+            }
+
+            Section("Notch") {
+                Toggle("Open on hover", isOn: $openOnHover)
+                if openOnHover {
+                    Stepper("Hover delay: \(hoverDelayMs) ms", value: $hoverDelayMs, in: 0...1000, step: 50)
+                    Text("Longer delay means fewer accidental opens when reaching for tabs or the menu bar. You can always click the notch to open it instantly.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Click the notch to open it.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Section("Theme") {

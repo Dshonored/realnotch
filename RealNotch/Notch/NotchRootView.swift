@@ -17,10 +17,17 @@ private struct NotchContainer: View {
     let appState: AppState
     let clipboard: ClipboardStore
     @Environment(\.theme) private var theme
+    @State private var hoverTask: Task<Void, Never>?
+
+    // Interaction preferences, live via Settings.
+    @AppStorage("openOnHover") private var openOnHover = true
+    @AppStorage("hoverDelayMs") private var hoverDelayMs = 300
 
     private let expandedWidth: CGFloat = 480
     private let expandedHeight: CGFloat = 340
     private let topFlare: CGFloat = 8
+    /// Delay before hover-close, so crossing internal view boundaries doesn't flicker.
+    private let closeDelayMs = 120
 
     // Detected once per view identity — NEVER per frame. NSScreen queries during
     // an animation tank the frame rate. The panel repositions itself on screen
@@ -64,15 +71,28 @@ private struct NotchContainer: View {
         .frame(width: width, height: height)
         .clipShape(shape)
         .contentShape(shape)
-        // Click the notch to open — hovering does NOT expand, so moving the cursor
-        // toward tabs/menu-bar items near the top never covers them with the panel.
+        // Click always opens — works whether or not hover is enabled.
         .onTapGesture {
             if !expanded { appState.isExpanded = true }
         }
-        // Auto-close the moment the cursor leaves the open panel, revealing whatever
-        // is behind it. Collapsed hover does nothing.
+        // Hover-to-open (boring.notch's model): a dwell delay before opening so a
+        // cursor merely passing toward tabs/menu-bar items doesn't trigger it, and a
+        // short debounced close so crossing internal boundaries doesn't flicker.
+        // Every event cancels the pending one — a proper debounce.
         .onHover { hovering in
-            if expanded && !hovering { appState.isExpanded = false }
+            hoverTask?.cancel()
+            if hovering {
+                guard !expanded, openOnHover else { return }
+                hoverTask = Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(hoverDelayMs))
+                    if !Task.isCancelled { appState.isExpanded = true }
+                }
+            } else if expanded {
+                hoverTask = Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(closeDelayMs))
+                    if !Task.isCancelled { appState.isExpanded = false }
+                }
+            }
         }
         .animation(theme.spring, value: expanded)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

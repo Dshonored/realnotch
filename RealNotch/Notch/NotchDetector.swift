@@ -21,6 +21,9 @@ enum NotchDetector {
             return Geometry(screen: notched, notchWidth: width, notchHeight: notched.safeAreaInsets.top)
         }
         guard let main = NSScreen.main ?? screens.first else { return nil }
-        return Geometry(screen: main, notchWidth: 200, notchHeight: 32)
+        // No hardware notch: synthesize one at the menu-bar height, like boring.notch
+        // and NotchDrop do, so the pill lines up with the menu bar on any display.
+        let menuBarHeight = main.frame.maxY - main.visibleFrame.maxY
+        return Geometry(screen: main, notchWidth: 185, notchHeight: max(menuBarHeight, 24))
     }
 }
