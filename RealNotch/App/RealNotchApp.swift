@@ -17,6 +17,9 @@ struct RealNotchApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    // NSApp.delegate is SwiftUI's internal wrapper, not this object — casting it fails.
+    private(set) static weak var shared: AppDelegate?
+
     let appState = AppState()
     let themeStore = ThemeStore()
     let clipboardStore = ClipboardStore()
@@ -28,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowController: NotchWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppDelegate.shared = self
         settingsController = SettingsWindowController(themeStore: themeStore, clipboard: clipboardStore)
 
         let monitor = ClipboardMonitor(store: clipboardStore)

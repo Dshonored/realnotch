@@ -6,7 +6,7 @@ import SwiftUI
 /// scene graph, so we drive an NSWindow we control directly.
 @MainActor
 func openAppSettings() {
-    (NSApp.delegate as? AppDelegate)?.settingsController?.show()
+    AppDelegate.shared?.settingsController?.show()
 }
 
 /// Root of the notch panel. Injects the current theme and holds all feature stores.
