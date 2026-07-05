@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "Gruvbox",
+  "author": "morhetz",
+  "colors": {
+    "background": "#282828FF",
+    "surface": "#3C383680",
+    "textPrimary": "#EBDBB2FF",
+    "textSecondary": "#928374FF",
+    "accent": "#FE8019FF",
+    "stackChip": "#83A598FF",
+    "success": "#B8BB26FF",
+    "pin": "#FABD2FFF"
+  },
+  "material": { "blur": "none", "backgroundOpacity": 0.96 }
+}

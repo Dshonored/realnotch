@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "One Dark",
+  "author": "atom",
+  "colors": {
+    "background": "#282C34FF",
+    "surface": "#3E445180",
+    "textPrimary": "#ABB2BFFF",
+    "textSecondary": "#5C6370FF",
+    "accent": "#61AFEFFF",
+    "stackChip": "#C678DDFF",
+    "success": "#98C379FF",
+    "pin": "#E5C07BFF"
+  },
+  "material": { "blur": "none", "backgroundOpacity": 0.96 }
+}

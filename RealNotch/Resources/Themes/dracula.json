@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "Dracula",
+  "author": "draculatheme.com",
+  "colors": {
+    "background": "#282A36FF",
+    "surface": "#44475A80",
+    "textPrimary": "#F8F8F2FF",
+    "textSecondary": "#6272A4FF",
+    "accent": "#BD93F9FF",
+    "stackChip": "#FF79C6FF",
+    "success": "#50FA7BFF",
+    "pin": "#F1FA8CFF"
+  },
+  "material": { "blur": "none", "backgroundOpacity": 0.95 }
+}

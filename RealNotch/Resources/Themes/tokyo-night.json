@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "Tokyo Night",
+  "author": "enkia",
+  "colors": {
+    "background": "#1A1B26FF",
+    "surface": "#292E4280",
+    "textPrimary": "#C0CAF5FF",
+    "textSecondary": "#565F89FF",
+    "accent": "#7AA2F7FF",
+    "stackChip": "#BB9AF7FF",
+    "success": "#9ECE6AFF",
+    "pin": "#E0AF68FF"
+  },
+  "material": { "blur": "none", "backgroundOpacity": 0.95 }
+}

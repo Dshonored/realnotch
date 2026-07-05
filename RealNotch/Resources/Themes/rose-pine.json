@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "Rosé Pine",
+  "author": "rosepinetheme.com",
+  "colors": {
+    "background": "#191724FF",
+    "surface": "#26233A99",
+    "textPrimary": "#E0DEF4FF",
+    "textSecondary": "#6E6A86FF",
+    "accent": "#C4A7E7FF",
+    "stackChip": "#EB6F92FF",
+    "success": "#9CCFD8FF",
+    "pin": "#F6C177FF"
+  },
+  "material": { "blur": "none", "backgroundOpacity": 0.96 }
+}

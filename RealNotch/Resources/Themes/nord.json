@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "Nord",
+  "author": "nordtheme.com",
+  "colors": {
+    "background": "#2E3440FF",
+    "surface": "#3B425280",
+    "textPrimary": "#ECEFF4FF",
+    "textSecondary": "#616E88FF",
+    "accent": "#88C0D0FF",
+    "stackChip": "#81A1C1FF",
+    "success": "#A3BE8CFF",
+    "pin": "#EBCB8BFF"
+  },
+  "material": { "blur": "none", "backgroundOpacity": 0.95 }
+}

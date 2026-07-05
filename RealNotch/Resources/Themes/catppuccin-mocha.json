@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "Catppuccin Mocha",
+  "author": "catppuccin",
+  "colors": {
+    "background": "#1E1E2EFF",
+    "surface": "#31324480",
+    "textPrimary": "#CDD6F4FF",
+    "textSecondary": "#7F849CFF",
+    "accent": "#CBA6F7FF",
+    "stackChip": "#F5C2E7FF",
+    "success": "#A6E3A1FF",
+    "pin": "#F9E2AFFF"
+  },
+  "material": { "blur": "none", "backgroundOpacity": 0.95 }
+}
