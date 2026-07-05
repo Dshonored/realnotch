@@ -19,6 +19,7 @@ enum AgentState: String {
 struct Agent: Codable, Identifiable, Equatable {
     let session_id: String
     var name: String?
+    var task: String?
     let cwd: String
     let status: String
     let detail: String
@@ -32,12 +33,11 @@ struct Agent: Codable, Identifiable, Equatable {
         return folder.isEmpty ? "session" : folder
     }
 
-    /// The session's `--name` if set, otherwise the project folder.
-    var displayName: String {
+    /// Row title: what the agent is working on (its latest prompt), falling back to
+    /// an explicit `--name`, then the project folder while no prompt has landed yet.
+    var label: String {
+        if let t = task, !t.isEmpty { return t }
         if let n = name, !n.isEmpty { return n }
         return project
     }
-
-    /// First chunk of the session id — distinguishes sessions in the same project.
-    var shortID: String { String(session_id.prefix(6)) }
 }

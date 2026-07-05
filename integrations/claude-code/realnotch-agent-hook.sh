@@ -19,6 +19,17 @@ tool=$(printf '%s' "$input"  | jq -r '.tool_name // empty')
 name=$(printf '%s' "$input"  | jq -r '.session_name // empty')
 file="$DIR/$sid.json"
 
+# The task label = the session's latest prompt. Only UserPromptSubmit carries it,
+# so preserve the previous task on every other event.
+prev_task=""
+[ -f "$file" ] && prev_task=$(jq -r '.task // empty' "$file" 2>/dev/null)
+if [ "$event" = "UserPromptSubmit" ]; then
+  prompt=$(printf '%s' "$input" | jq -r '.prompt // empty')
+  task=$(printf '%s' "$prompt" | tr '\n' ' ' | cut -c1-90)
+else
+  task="$prev_task"
+fi
+
 case "$event" in
   SessionEnd)
     rm -f "$file"; exit 0 ;;
@@ -37,7 +48,7 @@ case "$event" in
     status="working"; detail="" ;;
 esac
 
-jq -n --arg sid "$sid" --arg name "$name" --arg cwd "$cwd" --arg status "$status" --arg detail "$detail" \
-  '{session_id:$sid, name:$name, cwd:$cwd, status:$status, detail:$detail, updatedAt: now}' \
+jq -n --arg sid "$sid" --arg name "$name" --arg task "$task" --arg cwd "$cwd" --arg status "$status" --arg detail "$detail" \
+  '{session_id:$sid, name:$name, task:$task, cwd:$cwd, status:$status, detail:$detail, updatedAt: now}' \
   > "$file.tmp" 2>/dev/null && mv "$file.tmp" "$file"
 exit 0

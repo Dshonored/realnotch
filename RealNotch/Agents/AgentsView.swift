@@ -39,23 +39,19 @@ private struct AgentRow: View {
             HStack(spacing: 10) {
                 statusDot
                 VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 6) {
-                        Text(agent.displayName)
-                            .font(theme.font(theme.typography.itemSize, weight: .semibold))
-                            .foregroundStyle(Color(hex: theme.colors.textPrimary))
-                            .lineLimit(1)
-                        Text(agent.shortID)
-                            .font(.system(size: theme.typography.captionSize - 1, design: .monospaced))
-                            .foregroundStyle(Color(hex: theme.colors.textSecondary))
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1)
-                            .background(Color(hex: theme.colors.textPrimary).opacity(0.08))
-                            .clipShape(.rect(cornerRadius: 4))
-                    }
-                    Text(subtitle)
-                        .font(theme.font(theme.typography.captionSize))
-                        .foregroundStyle(Color(hex: statusColor))
+                    Text(agent.label)
+                        .font(theme.font(theme.typography.itemSize, weight: .semibold))
+                        .foregroundStyle(Color(hex: theme.colors.textPrimary))
                         .lineLimit(1)
+                    HStack(spacing: 5) {
+                        Text(agent.project)
+                            .foregroundStyle(Color(hex: theme.colors.textSecondary))
+                        Text("·").foregroundStyle(Color(hex: theme.colors.textSecondary))
+                        Text(subtitle)
+                            .foregroundStyle(Color(hex: statusColor))
+                    }
+                    .font(theme.font(theme.typography.captionSize))
+                    .lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 if agent.state == .waiting {
@@ -75,7 +71,7 @@ private struct AgentRow: View {
         }
         .buttonStyle(.plain)
         .onHover { hovered = $0 }
-        .accessibilityLabel("\(agent.displayName), \(subtitle). Click to focus terminal.")
+        .accessibilityLabel("\(agent.label), \(agent.project), \(subtitle). Click to focus terminal.")
     }
 
     private var statusDot: some View {
