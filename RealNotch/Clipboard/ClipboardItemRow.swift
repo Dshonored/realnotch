@@ -4,24 +4,24 @@ import SwiftUI
 struct ClipboardItemRow: View {
     let item: ClipboardItem
     let clipboard: ClipboardStore
+    let onCopy: (String) -> Void
     @Environment(\.theme) private var theme
-    @State private var isHovered = false
+    @State private var hovered = false
+    @State private var flashing = false
 
     var body: some View {
         Button {
-            // Shift-click stacks; plain click copies.
             if NSEvent.modifierFlags.contains(.shift) {
                 clipboard.toggleStack(item)
             } else {
                 clipboard.copy(item)
+                onCopy("Copied")
+                flash()
             }
         } label: {
-            HStack(spacing: 8) {
-                icon
-                    .foregroundStyle(Color(hex: theme.colors.accent))
-                    .frame(width: 16)
-
-                VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 11) {
+                iconChip
+                VStack(alignment: .leading, spacing: 1) {
                     Text(item.preview)
                         .font(theme.font(theme.typography.itemSize))
                         .foregroundStyle(Color(hex: theme.colors.textPrimary))
@@ -29,37 +29,66 @@ struct ClipboardItemRow: View {
                     if let app = item.sourceApp {
                         Text(app)
                             .font(theme.font(theme.typography.captionSize))
-                            .foregroundStyle(Color(hex: theme.colors.textSecondary))
+                            .foregroundStyle(Color(hex: theme.colors.textSecondary).opacity(0.7))
                     }
                 }
-
                 Spacer(minLength: 0)
 
                 if clipboard.isStacked(item) {
                     Image(systemName: "square.stack.3d.up.fill")
                         .font(.system(size: 10))
-                        .foregroundStyle(Color(hex: theme.colors.stackChip))
+                        .foregroundStyle(Color(hex: theme.colors.accent))
                 }
+
+                Button { clipboard.togglePin(item) } label: {
+                    Image(systemName: item.pinned ? "star.fill" : "star")
+                        .font(.system(size: 11))
+                        .foregroundStyle(item.pinned
+                            ? Color(hex: theme.colors.pin)
+                            : Color(hex: theme.colors.textSecondary).opacity(hovered ? 0.5 : 0.2))
+                }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 11)
+            .padding(.horizontal, 10)
             .padding(.vertical, 9)
             .background(
-                Color(hex: theme.colors.surface)
-                    .opacity(isHovered ? 1 : 0.6)
+                RoundedRectangle(cornerRadius: theme.shape.itemCornerRadius)
+                    .fill(flashing
+                        ? Color(hex: "#30D158FF").opacity(0.28)
+                        : Color(hex: theme.colors.surface).opacity(hovered ? 1.6 : 1))
             )
-            .clipShape(.rect(cornerRadius: theme.shape.itemCornerRadius))
         }
         .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
+        .onHover { hovered = $0 }
+        .animation(.easeOut(duration: 0.9), value: flashing)
         .accessibilityLabel("Copy \(item.preview). Shift-click to add to stack.")
     }
 
-    @ViewBuilder
-    private var icon: some View {
+    private var iconChip: some View {
+        Text(iconGlyph)
+            .font(.system(size: 12))
+            .frame(width: 26, height: 26)
+            .background(RoundedRectangle(cornerRadius: 7).fill(iconColor))
+    }
+
+    private var iconGlyph: String {
         switch item.content {
-        case .text: Image(systemName: "doc.on.doc")
-        case .image: Image(systemName: "photo")
-        case .fileURLs: Image(systemName: "folder")
+        case .text: "📄"
+        case .image: "🖼"
+        case .fileURLs: "🔗"
         }
+    }
+
+    private var iconColor: Color {
+        switch item.content {
+        case .text: Color(hex: "#5E5CE6FF")
+        case .image: Color(hex: "#FF9500FF")
+        case .fileURLs: Color(hex: theme.colors.accent)
+        }
+    }
+
+    private func flash() {
+        flashing = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.95) { flashing = false }
     }
 }

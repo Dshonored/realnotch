@@ -12,12 +12,24 @@ struct ClipboardItem: Codable, Equatable, Identifiable {
     let content: Content
     let date: Date
     let sourceApp: String?
+    var pinned: Bool
 
-    init(id: UUID = UUID(), content: Content, date: Date = .now, sourceApp: String? = nil) {
+    init(id: UUID = UUID(), content: Content, date: Date = .now, sourceApp: String? = nil, pinned: Bool = false) {
         self.id = id
         self.content = content
         self.date = date
         self.sourceApp = sourceApp
+        self.pinned = pinned
+    }
+
+    // `pinned` was added later; decode gracefully so old history.json still loads.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        content = try c.decode(Content.self, forKey: .content)
+        date = try c.decode(Date.self, forKey: .date)
+        sourceApp = try c.decodeIfPresent(String.self, forKey: .sourceApp)
+        pinned = try c.decodeIfPresent(Bool.self, forKey: .pinned) ?? false
     }
 
     /// Short human-readable preview for rows and accessibility labels.

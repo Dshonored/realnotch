@@ -17,18 +17,21 @@ struct Theme: Codable, Hashable, Identifiable {
     var motion: Motion = Motion()
 
     struct Colors: Codable, Hashable {
-        var background: String = "#000000FF"
-        var surface: String = "#1C1C1EFF"
+        var background: String = "#0C0C0EE6"
+        var surface: String = "#FFFFFF0D"
         var textPrimary: String = "#FFFFFFFF"
-        var textSecondary: String = "#98989DFF"
+        var textSecondary: String = "#FFFFFF80"
         var accent: String = "#0A84FFFF"
-        var stackChip: String = "#FF9F0AFF"
+        var stackChip: String = "#0A84FFFF"
+        var border: String = "#FFFFFF17"
+        var divider: String = "#FFFFFF14"
+        var pin: String = "#FFCF3FFF"
     }
 
     struct Shape: Codable, Hashable {
-        var notchCornerRadius: Double = 12
-        var panelCornerRadius: Double = 20
-        var itemCornerRadius: Double = 8
+        var notchCornerRadius: Double = 16
+        var panelCornerRadius: Double = 22
+        var itemCornerRadius: Double = 11
     }
 
     struct Typography: Codable, Hashable {
@@ -42,7 +45,7 @@ struct Theme: Codable, Hashable, Identifiable {
     struct Material: Codable, Hashable {
         /// "none", "thin", or "regular"
         var blur: String = "regular"
-        var backgroundOpacity: Double = 0.92
+        var backgroundOpacity: Double = 0.9
     }
 
     struct Motion: Codable, Hashable {
@@ -86,6 +89,9 @@ extension Theme.Colors {
         textSecondary = c.or(String.self, .textSecondary, d.textSecondary)
         accent = c.or(String.self, .accent, d.accent)
         stackChip = c.or(String.self, .stackChip, d.stackChip)
+        border = c.or(String.self, .border, d.border)
+        divider = c.or(String.self, .divider, d.divider)
+        pin = c.or(String.self, .pin, d.pin)
     }
 }
 

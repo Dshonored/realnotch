@@ -24,6 +24,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let appState = AppState()
     let themeStore = ThemeStore()
     let clipboardStore = ClipboardStore()
+    let notesStore = NotesStore()
+    let nowPlaying = NowPlaying()
+    let caffeine = CaffeineManager()
     private var monitor: ClipboardMonitor?
     private var windowController: NotchWindowController?
 
@@ -33,11 +36,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.monitor = monitor
 
         windowController = NotchWindowController(
-            content: NotchRootView(appState: appState, themeStore: themeStore, clipboard: clipboardStore)
+            content: NotchRootView(
+                appState: appState, themeStore: themeStore, clipboard: clipboardStore,
+                notes: notesStore, nowPlaying: nowPlaying, caffeine: caffeine
+            )
         )
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         clipboardStore.saveNow()
+        notesStore.saveNow()
+        caffeine.deactivate()
     }
 }

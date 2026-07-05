@@ -52,7 +52,22 @@ final class ClipboardStore {
     }
 
     private func trim() {
-        if items.count > maxItems { items.removeLast(items.count - maxItems) }
+        guard items.count > maxItems else { return }
+        // Evict oldest unpinned items first; pinned items are kept regardless of cap.
+        var overflow = items.count - maxItems
+        for i in stride(from: items.count - 1, through: 0, by: -1) where overflow > 0 {
+            if !items[i].pinned {
+                items.remove(at: i)
+                overflow -= 1
+            }
+        }
+    }
+
+    func togglePin(_ item: ClipboardItem) {
+        guard let i = items.firstIndex(where: { $0.id == item.id }) else { return }
+        // Just marks it and protects it from the cap — position is preserved.
+        items[i].pinned.toggle()
+        scheduleSave()
     }
 
     // MARK: - Copying

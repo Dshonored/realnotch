@@ -1,43 +1,51 @@
 import SwiftUI
 
-/// Root of the notch panel. Observes the theme store so live theme edits restyle
-/// everything, and injects the current theme into the environment.
+/// Root of the notch panel. Injects the current theme and holds all feature stores.
 struct NotchRootView: View {
     let appState: AppState
     let themeStore: ThemeStore
     let clipboard: ClipboardStore
+    let notes: NotesStore
+    let nowPlaying: NowPlaying
+    let caffeine: CaffeineManager
 
     var body: some View {
-        NotchContainer(appState: appState, clipboard: clipboard)
-            .environment(\.theme, themeStore.current)
+        NotchContainer(
+            appState: appState, clipboard: clipboard,
+            notes: notes, nowPlaying: nowPlaying, caffeine: caffeine
+        )
+        .environment(\.theme, themeStore.current)
     }
 }
 
 private struct NotchContainer: View {
     let appState: AppState
     let clipboard: ClipboardStore
-    @Environment(\.theme) private var theme
-    @State private var hoverTask: Task<Void, Never>?
+    let notes: NotesStore
+    let nowPlaying: NowPlaying
+    let caffeine: CaffeineManager
 
-    // Interaction preferences, live via Settings.
+    @Environment(\.theme) private var theme
+    @Environment(\.openSettings) private var openSettings
+    @State private var hoverTask: Task<Void, Never>?
+    @State private var copyToast: String?
+    @State private var glow = false
+
     @AppStorage("openOnHover") private var openOnHover = true
     @AppStorage("hoverDelayMs") private var hoverDelayMs = 300
 
-    private let expandedWidth: CGFloat = 480
-    private let expandedHeight: CGFloat = 340
-    private let topFlare: CGFloat = 8
-    /// Delay before hover-close, so crossing internal view boundaries doesn't flicker.
+    private let expandedWidth: CGFloat = 440
     private let closeDelayMs = 120
-
-    // Detected once per view identity — NEVER per frame. NSScreen queries during
-    // an animation tank the frame rate. The panel repositions itself on screen
-    // changes; a stale width here only mis-sizes the collapsed state briefly.
     private let notchWidth: CGFloat
     private let notchHeight: CGFloat
 
-    init(appState: AppState, clipboard: ClipboardStore) {
+    init(appState: AppState, clipboard: ClipboardStore, notes: NotesStore,
+         nowPlaying: NowPlaying, caffeine: CaffeineManager) {
         self.appState = appState
         self.clipboard = clipboard
+        self.notes = notes
+        self.nowPlaying = nowPlaying
+        self.caffeine = caffeine
         let g = NotchDetector.detect()
         notchWidth = g?.notchWidth ?? 200
         notchHeight = g?.notchHeight ?? 32
@@ -45,40 +53,26 @@ private struct NotchContainer: View {
 
     var body: some View {
         let expanded = appState.isExpanded
-        // Collapsed hit area = the notch itself (no extra), so it only triggers
-        // when the cursor is actually over the notch, not near it.
-        let width = expanded ? expandedWidth : notchWidth
-        let height = expanded ? expandedHeight : notchHeight
-        let radius = expanded ? theme.shape.panelCornerRadius : theme.shape.notchCornerRadius
-        let shape = NotchShape(bottomRadius: radius, topRadius: topFlare)
-
         ZStack(alignment: .top) {
-            // Always in the hierarchy — inserting/removing views mid-animation
-            // causes visible ghosting. Animate opacity instead.
-            shape
-                .fill(theme.material.blur == "thin" ? Material.ultraThinMaterial : .regularMaterial)
-                .opacity(theme.material.blur == "none" || !expanded ? 0 : 1)
-            shape
-                .fill(Color(hex: theme.colors.background)
-                    .opacity(expanded ? theme.material.backgroundOpacity : 1))
-
-            ClipboardHistoryView(clipboard: clipboard)
-                .padding(.top, notchHeight)
-                .frame(width: expandedWidth, height: expandedHeight, alignment: .top)
-                .opacity(expanded ? 1 : 0)
-                .allowsHitTesting(expanded)
+            if expanded {
+                NotchPanel(
+                    appState: appState, clipboard: clipboard, notes: notes,
+                    nowPlaying: nowPlaying, caffeine: caffeine,
+                    width: expandedWidth, onCopy: showToast, openSettings: { openSettings() }
+                )
+                .shadow(color: Color(hex: "#30D158FF").opacity(glow ? 0.5 : 0), radius: glow ? 26 : 0)
+                .overlay(alignment: .top) { toast }
+                .transition(.opacity)
+            } else {
+                CollapsedNotchView(clipboardCount: clipboard.items.count, isPlaying: nowPlaying.isPlaying)
+                    .frame(width: max(notchWidth, 190), height: notchHeight)
+                    .background(NotchShape(bottomRadius: theme.shape.notchCornerRadius).fill(.black))
+                    .transition(.opacity)
+            }
         }
-        .frame(width: width, height: height)
-        .clipShape(shape)
-        .contentShape(shape)
-        // Click always opens — works whether or not hover is enabled.
-        .onTapGesture {
-            if !expanded { appState.isExpanded = true }
-        }
-        // Hover-to-open (boring.notch's model): a dwell delay before opening so a
-        // cursor merely passing toward tabs/menu-bar items doesn't trigger it, and a
-        // short debounced close so crossing internal boundaries doesn't flicker.
-        // Every event cancels the pending one — a proper debounce.
+        .animation(theme.spring, value: expanded)
+        .animation(.easeOut(duration: 0.5), value: glow)
+        .onTapGesture { if !expanded { appState.isExpanded = true } }
         .onHover { hovering in
             hoverTask?.cancel()
             if hovering {
@@ -94,7 +88,32 @@ private struct NotchContainer: View {
                 }
             }
         }
-        .animation(theme.spring, value: expanded)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    @ViewBuilder
+    private var toast: some View {
+        if let label = copyToast {
+            Text("\(label) ✓")
+                .font(theme.font(theme.typography.captionSize, weight: .bold))
+                .foregroundStyle(Color(hex: "#08210FFF"))
+                .padding(.horizontal, 13)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(Color(hex: "#30D158FF")))
+                .shadow(color: Color(hex: "#30D158FF").opacity(0.55), radius: 12, y: 4)
+                .offset(y: -6)
+                .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+
+    private func showToast(_ label: String) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            copyToast = label
+            glow = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            withAnimation { copyToast = nil }
+            glow = false
+        }
     }
 }
