@@ -63,7 +63,9 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420)
+        // A grouped Form has no intrinsic height in an NSHostingController, so the
+        // window collapses to its title bar without an explicit size.
+        .frame(width: 460, height: 520)
         .onAppear { maxItems = clipboard.maxItems }
     }
 }

@@ -30,6 +30,7 @@ final class SettingsWindowController {
         w.title = "RealNotch Settings"
         w.styleMask = [.titled, .closable, .miniaturizable]
         w.isReleasedWhenClosed = false
+        w.setContentSize(NSSize(width: 460, height: 520))
         w.center()
         w.makeKeyAndOrderFront(nil)
         window = w
