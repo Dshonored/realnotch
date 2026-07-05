@@ -6,7 +6,7 @@ struct ClipboardHistoryView: View {
     @Environment(\.theme) private var theme
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             header
 
             if clipboard.items.isEmpty {
@@ -16,15 +16,22 @@ struct ClipboardHistoryView: View {
                     .frame(maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 4) {
+                    LazyVStack(spacing: 5) {
                         ForEach(clipboard.items) { item in
                             ClipboardItemRow(item: item, clipboard: clipboard)
                         }
                     }
+                    // So the scroll fade/last row clears the rounded bottom corners.
+                    .padding(.bottom, 4)
                 }
+                .scrollIndicators(.never)
             }
         }
-        .padding(12)
+        // Horizontal clears the top flares; bottom scales with the panel's corner
+        // radius so rows never tuck under the curve on any skin.
+        .padding(.horizontal, 18)
+        .padding(.top, 14)
+        .padding(.bottom, max(16, theme.shape.panelCornerRadius * 0.7))
     }
 
     private var header: some View {

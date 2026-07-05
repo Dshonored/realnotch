@@ -41,8 +41,8 @@ struct ClipboardItemRow: View {
                         .foregroundStyle(Color(hex: theme.colors.stackChip))
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, 11)
+            .padding(.vertical, 9)
             .background(
                 Color(hex: theme.colors.surface)
                     .opacity(isHovered ? 1 : 0.6)
