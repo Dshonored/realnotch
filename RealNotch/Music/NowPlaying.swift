@@ -2,13 +2,13 @@ import AppKit
 import Foundation
 import Observation
 
-/// Live "now playing" via the private MediaRemote framework.
+/// Live "now playing" for ANY source (Music, Spotify, browsers…).
 ///
-/// ponytail: MediaRemote is a private API. Apple gated the now-playing read behind
-/// an entitlement on recent macOS, so on newer systems the callbacks may never fire
-/// — the UI then just shows the empty state. All access is guarded; nothing crashes
-/// if the framework or a symbol is missing. If live media matters and this is dark on
-/// your macOS, that's the known private-API restriction, not a logic bug.
+/// Reading MediaRemote directly is blocked for third-party apps since macOS 15.4 —
+/// the media daemon only answers `com.apple.*` processes. So we READ by running a
+/// tiny JXA snippet through `/usr/bin/osascript` (an Apple-signed binary the daemon
+/// trusts) and parsing its JSON. Sending transport commands is NOT gated, so those
+/// still go directly through MediaRemote via dlsym.
 @Observable
 final class NowPlaying {
     var title = ""
@@ -22,62 +22,117 @@ final class NowPlaying {
     var hasTrack: Bool { !title.isEmpty }
     var progress: Double { duration > 0 ? min(1, elapsed / duration) : 0 }
 
-    // MediaRemote symbols, resolved once.
-    private typealias GetInfo = @convention(c) (DispatchQueue, @escaping ([String: Any]) -> Void) -> Void
-    private typealias GetIsPlaying = @convention(c) (DispatchQueue, @escaping (Bool) -> Void) -> Void
     private typealias SendCommand = @convention(c) (Int, [AnyHashable: Any]?) -> Bool
-    private typealias RegisterNotifications = @convention(c) (DispatchQueue) -> Void
-
-    private var getInfo: GetInfo?
-    private var getIsPlaying: GetIsPlaying?
     private var sendCommand: SendCommand?
+    private var timer: Timer?
 
     init() {
-        loadMediaRemote()
+        loadCommandSender()
         refresh()
-        // Poll — cheaper than fighting the private notification API, and MediaRemote's
-        // notifications are unreliable when entitlement-gated anyway.
-        Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             self?.refresh()
         }
     }
 
-    private func loadMediaRemote() {
-        guard let handle = dlopen(
-            "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote",
-            RTLD_NOW
-        ) else { return }
-        if let s = dlsym(handle, "MRMediaRemoteGetNowPlayingInfo") {
-            getInfo = unsafeBitCast(s, to: GetInfo.self)
-        }
-        if let s = dlsym(handle, "MRMediaRemoteGetNowPlayingApplicationIsPlaying") {
-            getIsPlaying = unsafeBitCast(s, to: GetIsPlaying.self)
-        }
-        if let s = dlsym(handle, "MRMediaRemoteSendCommand") {
-            sendCommand = unsafeBitCast(s, to: SendCommand.self)
-        }
+    // MARK: reading (via osascript)
+
+    private static let readScript = """
+    function run() {
+      const MR = $.NSBundle.bundleWithPath('/System/Library/PrivateFrameworks/MediaRemote.framework/');
+      MR.load;
+      const Req = $.NSClassFromString('MRNowPlayingRequest');
+      const item = Req.localNowPlayingItem;
+      if (!item) return '{}';
+      const info = item.nowPlayingInfo;
+      if (!info) return '{}';
+      function s(k){ const v = info.valueForKey(k); return v ? v.js : null; }
+      let art = info.valueForKey('kMRMediaRemoteNowPlayingInfoArtworkData');
+      let artB64 = null;
+      if (art && art.length > 0) { artB64 = art.base64EncodedStringWithOptions(0).js; }
+      let app = null;
+      const path = Req.localNowPlayingPlayerPath;
+      if (path && path.client) { const dn = path.client.displayName; app = dn ? dn.js : null; }
+      return JSON.stringify({
+        title: s('kMRMediaRemoteNowPlayingInfoTitle'),
+        artist: s('kMRMediaRemoteNowPlayingInfoArtist'),
+        rate: s('kMRMediaRemoteNowPlayingInfoPlaybackRate'),
+        duration: s('kMRMediaRemoteNowPlayingInfoDuration'),
+        elapsed: s('kMRMediaRemoteNowPlayingInfoElapsedTime'),
+        artwork: artB64,
+        app: app
+      });
+    }
+    """
+
+    private struct Payload: Decodable {
+        var title: String?
+        var artist: String?
+        var rate: Double?
+        var duration: Double?
+        var elapsed: Double?
+        var artwork: String?
+        var app: String?
     }
 
     func refresh() {
-        getInfo?(.main) { [weak self] info in
-            guard let self else { return }
-            self.title = info["kMRMediaRemoteNowPlayingInfoTitle"] as? String ?? ""
-            self.artist = info["kMRMediaRemoteNowPlayingInfoArtist"] as? String ?? ""
-            self.duration = info["kMRMediaRemoteNowPlayingInfoDuration"] as? Double ?? 0
-            self.elapsed = info["kMRMediaRemoteNowPlayingInfoElapsedTime"] as? Double ?? 0
-            if let data = info["kMRMediaRemoteNowPlayingInfoArtworkData"] as? Data {
-                self.artwork = NSImage(data: data)
-            } else if self.title.isEmpty {
-                self.artwork = nil
-            }
-        }
-        getIsPlaying?(.main) { [weak self] playing in
-            self?.isPlaying = playing
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let json = Self.runOsascript() else { return }
+            let payload = try? JSONDecoder().decode(Payload.self, from: Data(json.utf8))
+            DispatchQueue.main.async { self?.apply(payload) }
         }
     }
 
-    // MediaRemote command codes.
-    func playPause() { _ = sendCommand?(2, nil); refresh() }
-    func next() { _ = sendCommand?(4, nil); refresh() }
-    func previous() { _ = sendCommand?(5, nil); refresh() }
+    private func apply(_ p: Payload?) {
+        guard let p, let t = p.title, !t.isEmpty else {
+            title = ""; artist = ""; appName = ""; artwork = nil
+            isPlaying = false; elapsed = 0; duration = 0
+            return
+        }
+        title = t
+        artist = p.artist ?? ""
+        appName = p.app ?? ""
+        isPlaying = (p.rate ?? 0) > 0
+        duration = p.duration ?? 0
+        elapsed = p.elapsed ?? 0
+        if let b64 = p.artwork, let data = Data(base64Encoded: b64) {
+            artwork = NSImage(data: data)
+        } else {
+            artwork = nil
+        }
+    }
+
+    private static func runOsascript() -> String? {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        task.arguments = ["-l", "JavaScript", "-e", readScript]
+        let out = Pipe()
+        task.standardOutput = out
+        task.standardError = FileHandle.nullDevice
+        do {
+            try task.run()
+        } catch {
+            return nil
+        }
+        let data = out.fileHandleForReading.readDataToEndOfFile()
+        task.waitUntilExit()
+        return String(data: data, encoding: .utf8)
+    }
+
+    // MARK: commands (still allowed directly)
+
+    private func loadCommandSender() {
+        guard let handle = dlopen(
+            "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote", RTLD_NOW
+        ), let sym = dlsym(handle, "MRMediaRemoteSendCommand") else { return }
+        sendCommand = unsafeBitCast(sym, to: SendCommand.self)
+    }
+
+    func playPause() { _ = sendCommand?(2, nil); nudge() }
+    func next() { _ = sendCommand?(4, nil); nudge() }
+    func previous() { _ = sendCommand?(5, nil); nudge() }
+
+    /// Re-read shortly after a command so the UI reflects the new state fast.
+    private func nudge() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.refresh() }
+    }
 }
