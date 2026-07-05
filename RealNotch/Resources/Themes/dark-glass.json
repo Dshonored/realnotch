@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "Dark Glass",
+  "author": "RealNotch",
+  "colors": {
+    "background": "#0A0A0CE6",
+    "surface": "#2C2C2E99",
+    "textPrimary": "#F2F2F7FF",
+    "textSecondary": "#8E8E93FF",
+    "accent": "#64D2FFFF",
+    "stackChip": "#FFD60AFF"
+  },
+  "shape": {
+    "notchCornerRadius": 14,
+    "panelCornerRadius": 26,
+    "itemCornerRadius": 10
+  },
+  "material": {
+    "blur": "thin",
+    "backgroundOpacity": 0.75
+  },
+  "motion": {
+    "springResponse": 0.45,
+    "springDamping": 0.7
+  }
+}
