@@ -18,20 +18,33 @@ final class ThemeStore {
 
     init() {
         try? FileManager.default.createDirectory(at: Self.userThemesDirectory, withIntermediateDirectories: true)
+        seedBundledThemes()
         reload()
         watchUserThemes()
     }
 
+    /// Copy the bundled skins into the user's Themes folder on first run, so they're
+    /// visible and editable (they'd otherwise be locked inside the .app bundle).
+    private func seedBundledThemes() {
+        // Synchronized groups flatten resources to the bundle root, so look there
+        // (subdirectory: nil). Note: passing a missing subdirectory returns an empty
+        // array, not nil — so a `?? fallback` on it would never fire.
+        let bundled = Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil) ?? []
+        for src in bundled {
+            let dest = Self.userThemesDirectory.appending(path: src.lastPathComponent)
+            if !FileManager.default.fileExists(atPath: dest.path) {
+                try? FileManager.default.copyItem(at: src, to: dest)
+            }
+        }
+    }
+
     func reload() {
         var loaded: [Theme] = [.default]
-        // Xcode's synchronized groups may flatten resources into the bundle root.
-        let bundled = Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: "Themes")
-            ?? Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil) ?? []
         let user = (try? FileManager.default.contentsOfDirectory(
             at: Self.userThemesDirectory, includingPropertiesForKeys: nil
-        ))?.filter { $0.pathExtension == "json" } ?? []
+        ))?.filter { $0.pathExtension == "json" }.sorted { $0.lastPathComponent < $1.lastPathComponent } ?? []
 
-        for url in bundled + user {
+        for url in user {
             do {
                 let theme = try JSONDecoder().decode(Theme.self, from: Data(contentsOf: url))
                 loaded.removeAll { $0.name == theme.name }
