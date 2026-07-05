@@ -17,10 +17,14 @@ private struct NotchContainer: View {
     let appState: AppState
     let clipboard: ClipboardStore
     @Environment(\.theme) private var theme
+    @State private var hoverIntent: Task<Void, Never>?
 
     private let expandedWidth: CGFloat = 480
     private let expandedHeight: CGFloat = 340
     private let topFlare: CGFloat = 8
+    /// How long the cursor must dwell on the notch before it expands. Stops a
+    /// quick pass-through (or reaching for the menu bar) from popping it open.
+    private let dwell: Duration = .milliseconds(220)
 
     // Detected once per view identity — NEVER per frame. NSScreen queries during
     // an animation tank the frame rate. The panel repositions itself on screen
@@ -38,8 +42,9 @@ private struct NotchContainer: View {
 
     var body: some View {
         let expanded = appState.isExpanded
-        // +2*topFlare so the flat part of the shape still spans the hardware notch.
-        let width = expanded ? expandedWidth : notchWidth + 2 * topFlare
+        // Collapsed hit area = the notch itself (no extra), so it only triggers
+        // when the cursor is actually over the notch, not near it.
+        let width = expanded ? expandedWidth : notchWidth
         let height = expanded ? expandedHeight : notchHeight
         let radius = expanded ? theme.shape.panelCornerRadius : theme.shape.notchCornerRadius
         let shape = NotchShape(bottomRadius: radius, topRadius: topFlare)
@@ -64,7 +69,17 @@ private struct NotchContainer: View {
         .clipShape(shape)
         .contentShape(shape)
         .onHover { hovering in
-            appState.isExpanded = hovering
+            hoverIntent?.cancel()
+            if hovering {
+                // Expand only after the cursor dwells — kills accidental triggers.
+                hoverIntent = Task { @MainActor in
+                    try? await Task.sleep(for: dwell)
+                    if !Task.isCancelled { appState.isExpanded = true }
+                }
+            } else {
+                // Collapse immediately for a responsive feel.
+                appState.isExpanded = false
+            }
         }
         .animation(theme.spring, value: expanded)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
