@@ -17,14 +17,10 @@ private struct NotchContainer: View {
     let appState: AppState
     let clipboard: ClipboardStore
     @Environment(\.theme) private var theme
-    @State private var hoverIntent: Task<Void, Never>?
 
     private let expandedWidth: CGFloat = 480
     private let expandedHeight: CGFloat = 340
     private let topFlare: CGFloat = 8
-    /// How long the cursor must dwell on the notch before it expands. Stops a
-    /// quick pass-through (or reaching for the menu bar) from popping it open.
-    private let dwell: Duration = .milliseconds(220)
 
     // Detected once per view identity — NEVER per frame. NSScreen queries during
     // an animation tank the frame rate. The panel repositions itself on screen
@@ -68,18 +64,15 @@ private struct NotchContainer: View {
         .frame(width: width, height: height)
         .clipShape(shape)
         .contentShape(shape)
+        // Click the notch to open — hovering does NOT expand, so moving the cursor
+        // toward tabs/menu-bar items near the top never covers them with the panel.
+        .onTapGesture {
+            if !expanded { appState.isExpanded = true }
+        }
+        // Auto-close the moment the cursor leaves the open panel, revealing whatever
+        // is behind it. Collapsed hover does nothing.
         .onHover { hovering in
-            hoverIntent?.cancel()
-            if hovering {
-                // Expand only after the cursor dwells — kills accidental triggers.
-                hoverIntent = Task { @MainActor in
-                    try? await Task.sleep(for: dwell)
-                    if !Task.isCancelled { appState.isExpanded = true }
-                }
-            } else {
-                // Collapse immediately for a responsive feel.
-                appState.isExpanded = false
-            }
+            if expanded && !hovering { appState.isExpanded = false }
         }
         .animation(theme.spring, value: expanded)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
