@@ -64,12 +64,22 @@ struct ClipboardItemRow: View {
         .accessibilityLabel("Copy \(item.preview). Shift-click to add to stack.")
     }
 
+    @ViewBuilder
     private var iconChip: some View {
-        Image(systemName: iconSymbol)
-            .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(.white)
-            .frame(width: 26, height: 26)
-            .background(RoundedRectangle(cornerRadius: 7).fill(iconColor))
+        if case .image(let path) = item.content, let thumb = NSImage(contentsOfFile: path) {
+            // Show a real thumbnail of the copied image instead of a generic glyph.
+            Image(nsImage: thumb)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 34, height: 26)
+                .clipShape(.rect(cornerRadius: 7))
+        } else {
+            Image(systemName: iconSymbol)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.white)
+                .frame(width: 26, height: 26)
+                .background(RoundedRectangle(cornerRadius: 7).fill(iconColor))
+        }
     }
 
     private var iconSymbol: String {

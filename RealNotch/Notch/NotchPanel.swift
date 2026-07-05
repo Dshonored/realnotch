@@ -16,6 +16,8 @@ struct NotchPanel: View {
 
     @Environment(\.theme) private var theme
 
+    // Background/clip/border are owned by the animated container in NotchRootView
+    // so the panel can grow out of the notch smoothly.
     var body: some View {
         VStack(spacing: 0) {
             Color.clear.frame(height: notchHeight)
@@ -27,12 +29,6 @@ struct NotchPanel: View {
             footer
         }
         .frame(width: width)
-        .background(panelBackground)
-        .clipShape(NotchShape(bottomRadius: theme.shape.panelCornerRadius))
-        .overlay(
-            NotchShape(bottomRadius: theme.shape.panelCornerRadius)
-                .stroke(Color(hex: theme.colors.border), lineWidth: 1)
-        )
     }
 
     // MARK: header
@@ -150,14 +146,5 @@ struct NotchPanel: View {
         Rectangle()
             .fill(Color(hex: theme.colors.divider))
             .frame(height: 1)
-    }
-
-    private var panelBackground: some View {
-        ZStack {
-            if theme.material.blur != "none" {
-                Rectangle().fill(theme.material.blur == "thin" ? Material.ultraThinMaterial : .regularMaterial)
-            }
-            Rectangle().fill(Color(hex: theme.colors.background).opacity(theme.material.backgroundOpacity))
-        }
     }
 }

@@ -30,6 +30,7 @@ private struct NotchContainer: View {
     @State private var hoverTask: Task<Void, Never>?
     @State private var copyToast: String?
     @State private var glow = false
+    @State private var panelHeight: CGFloat = 340
 
     @AppStorage("openOnHover") private var openOnHover = true
     @AppStorage("hoverDelayMs") private var hoverDelayMs = 300
@@ -38,6 +39,8 @@ private struct NotchContainer: View {
     private let closeDelayMs = 120
     private let notchWidth: CGFloat
     private let notchHeight: CGFloat
+
+    private var collapsedWidth: CGFloat { max(notchWidth, 190) }
 
     init(appState: AppState, clipboard: ClipboardStore, notes: NotesStore,
          nowPlaying: NowPlaying, caffeine: CaffeineManager) {
@@ -53,25 +56,38 @@ private struct NotchContainer: View {
 
     var body: some View {
         let expanded = appState.isExpanded
+        let width = expanded ? expandedWidth : collapsedWidth
+        let height = expanded ? panelHeight : notchHeight
+        let radius = expanded ? theme.shape.panelCornerRadius : theme.shape.notchCornerRadius
+        let shape = NotchShape(bottomRadius: radius)
+
         ZStack(alignment: .top) {
-            if expanded {
-                NotchPanel(
-                    appState: appState, clipboard: clipboard, notes: notes,
-                    nowPlaying: nowPlaying, caffeine: caffeine,
-                    width: expandedWidth, notchHeight: notchHeight,
-                    onCopy: showToast, openSettings: { openSettings() }
-                )
-                .shadow(color: Color(hex: "#30D158FF").opacity(glow ? 0.5 : 0), radius: glow ? 26 : 0)
-                .overlay(alignment: .top) { toast }
-                .transition(.opacity)
-            } else {
-                CollapsedNotchView(clipboardCount: clipboard.items.count, isPlaying: nowPlaying.isPlaying)
-                    .frame(width: max(notchWidth, 190), height: notchHeight)
-                    .background(NotchShape(bottomRadius: theme.shape.notchCornerRadius).fill(.black))
-                    .transition(.opacity)
-            }
+            // One background shape that grows — clipping the content as it opens
+            // gives a real "grow out of the notch" reveal instead of a pop.
+            panelBackground(shape, expanded: expanded)
+
+            CollapsedNotchView(clipboardCount: clipboard.items.count, isPlaying: nowPlaying.isPlaying)
+                .frame(width: collapsedWidth, height: notchHeight)
+                .opacity(expanded ? 0 : 1)
+
+            NotchPanel(
+                appState: appState, clipboard: clipboard, notes: notes,
+                nowPlaying: nowPlaying, caffeine: caffeine,
+                width: expandedWidth, notchHeight: notchHeight,
+                onCopy: showToast, openSettings: { openSettings() }
+            )
+            .fixedSize(horizontal: false, vertical: true)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelHeight = $0 }
+            .opacity(expanded ? 1 : 0)
+            .allowsHitTesting(expanded)
+            .overlay(alignment: .top) { toast }
         }
+        .frame(width: width, height: height, alignment: .top)
+        .clipShape(shape)
+        .overlay(shape.stroke(Color(hex: theme.colors.border), lineWidth: expanded ? 1 : 0))
+        .shadow(color: Color(hex: "#30D158FF").opacity(glow ? 0.5 : 0), radius: glow ? 26 : 0)
         .animation(theme.spring, value: expanded)
+        .animation(theme.spring, value: panelHeight)
         .animation(.easeOut(duration: 0.5), value: glow)
         .onTapGesture { if !expanded { appState.isExpanded = true } }
         .onHover { hovering in
@@ -90,6 +106,16 @@ private struct NotchContainer: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private func panelBackground(_ shape: NotchShape, expanded: Bool) -> some View {
+        ZStack {
+            if expanded && theme.material.blur != "none" {
+                shape.fill(theme.material.blur == "thin" ? Material.ultraThinMaterial : .regularMaterial)
+            }
+            shape.fill(Color(hex: theme.colors.background)
+                .opacity(expanded ? theme.material.backgroundOpacity : 1))
+        }
     }
 
     @ViewBuilder
