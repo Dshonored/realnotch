@@ -27,18 +27,22 @@ Changes apply **live** — save the file and watch the notch restyle. Pick your 
   "author": "you",
 
   "colors": {
-    "background": "#000000FF",
-    "surface": "#1C1C1EFF",
+    "background": "#0C0C0EE6",
+    "surface": "#FFFFFF0D",
     "textPrimary": "#FFFFFFFF",
-    "textSecondary": "#98989DFF",
+    "textSecondary": "#FFFFFF80",
     "accent": "#0A84FFFF",
-    "stackChip": "#FF9F0AFF"
+    "stackChip": "#0A84FFFF",
+    "success": "#30D158FF",
+    "pin": "#FFCF3FFF",
+    "border": "#FFFFFF17",
+    "divider": "#FFFFFF14"
   },
 
   "shape": {
-    "notchCornerRadius": 12,
-    "panelCornerRadius": 20,
-    "itemCornerRadius": 8
+    "notchCornerRadius": 16,
+    "panelCornerRadius": 22,
+    "itemCornerRadius": 11
   },
 
   "typography": {
@@ -64,7 +68,16 @@ Changes apply **live** — save the file and watch the notch restyle. Pick your 
 
 | Field | Meaning |
 |---|---|
-| `colors.*` | Hex `#RRGGBB` or `#RRGGBBAA`. `background` fills the notch/panel; `surface` is item rows; `stackChip` is the shift-click stack badge. |
+| `colors.background` | Fills the notch and expanded panel. Alpha matters — see `material.backgroundOpacity`. |
+| `colors.surface` | Clipboard/notes row background (usually a low-alpha white/black). |
+| `colors.textPrimary` | Main text. **Also drives the panel chrome** — tab highlights, the Keep-Awake track, toggles, and progress rails are `textPrimary` at low opacity, so a dark `textPrimary` gives you a working light theme automatically. |
+| `colors.textSecondary` | Secondary text, hints, inactive tabs, icons. |
+| `colors.accent` | Active/interactive accent — clipboard icon chips, stacked pill. |
+| `colors.success` | The "live/active/done" green — status dot, Keep Awake when on, the copy confirmation toast + glow. |
+| `colors.stackChip` | The "N stacked" pill. |
+| `colors.pin` | The star on pinned clipboard items / notes. |
+| `colors.border` | Panel outline. |
+| `colors.divider` | The hairline rules between header/body/footer. |
 | `shape.notchCornerRadius` | Bottom corner radius of the collapsed notch. |
 | `shape.panelCornerRadius` | Bottom corner radius of the expanded panel. |
 | `typography.fontFamily` | A font family name installed on the system. Empty string = San Francisco (system font). |

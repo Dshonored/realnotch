@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "Daylight",
+  "author": "RealNotch",
+  "colors": {
+    "background": "#F5F5F7F7",
+    "surface": "#00000008",
+    "textPrimary": "#1C1C1EFF",
+    "textSecondary": "#6E6E73FF",
+    "accent": "#007AFFFF",
+    "stackChip": "#007AFFFF",
+    "success": "#34C759FF",
+    "pin": "#FF9500FF",
+    "border": "#00000014",
+    "divider": "#00000010"
+  },
+  "shape": {
+    "notchCornerRadius": 16,
+    "panelCornerRadius": 22,
+    "itemCornerRadius": 11
+  },
+  "material": {
+    "blur": "regular",
+    "backgroundOpacity": 0.85
+  }
+}

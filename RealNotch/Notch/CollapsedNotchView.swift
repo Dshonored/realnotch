@@ -13,7 +13,7 @@ struct CollapsedNotchView: View {
                 Image(systemName: "doc.on.clipboard").font(.system(size: 9))
                 Text("\(clipboardCount)").font(theme.font(theme.typography.captionSize))
             }
-            .foregroundStyle(.white.opacity(0.55))
+            .foregroundStyle(Color(hex: theme.colors.textPrimary).opacity(0.55))
 
             Spacer()
 
@@ -26,10 +26,10 @@ struct CollapsedNotchView: View {
 
             HStack(spacing: 5) {
                 Image(systemName: "music.note").font(.system(size: 9))
-                Waveform(active: isPlaying, color: .white)
+                Waveform(active: isPlaying, color: Color(hex: theme.colors.textPrimary))
                     .frame(width: 12, height: 9)
             }
-            .foregroundStyle(.white.opacity(0.55))
+            .foregroundStyle(Color(hex: theme.colors.textPrimary).opacity(0.55))
         }
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "name": "Midnight",
+  "author": "RealNotch",
+  "colors": {
+    "background": "#12142AF2",
+    "surface": "#FFFFFF12",
+    "textPrimary": "#EAEAFFFF",
+    "textSecondary": "#8A8CB8FF",
+    "accent": "#7C5CFFFF",
+    "stackChip": "#7C5CFFFF",
+    "success": "#4ADE80FF",
+    "pin": "#FBBF24FF"
+  },
+  "shape": {
+    "notchCornerRadius": 16,
+    "panelCornerRadius": 24,
+    "itemCornerRadius": 12
+  },
+  "material": {
+    "blur": "none",
+    "backgroundOpacity": 0.95
+  }
+}

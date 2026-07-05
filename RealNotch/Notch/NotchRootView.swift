@@ -85,7 +85,7 @@ private struct NotchContainer: View {
         .frame(width: width, height: height, alignment: .top)
         .clipShape(shape)
         .overlay(shape.stroke(Color(hex: theme.colors.border), lineWidth: expanded ? 1 : 0))
-        .shadow(color: Color(hex: "#30D158FF").opacity(glow ? 0.5 : 0), radius: glow ? 26 : 0)
+        .shadow(color: Color(hex: theme.colors.success).opacity(glow ? 0.5 : 0), radius: glow ? 26 : 0)
         // Pin hover/tap to the visible notch shape. clipShape only clips drawing —
         // without this the always-present (invisible) panel inflates the hit area.
         .contentShape(shape)
@@ -129,11 +129,11 @@ private struct NotchContainer: View {
                 Image(systemName: "checkmark")
             }
                 .font(theme.font(theme.typography.captionSize, weight: .bold))
-                .foregroundStyle(Color(hex: "#08210FFF"))
+                .foregroundStyle(Color(hex: theme.colors.background))
                 .padding(.horizontal, 13)
                 .padding(.vertical, 5)
-                .background(Capsule().fill(Color(hex: "#30D158FF")))
-                .shadow(color: Color(hex: "#30D158FF").opacity(0.55), radius: 12, y: 4)
+                .background(Capsule().fill(Color(hex: theme.colors.success)))
+                .shadow(color: Color(hex: theme.colors.success).opacity(0.55), radius: 12, y: 4)
                 .offset(y: notchHeight + 4)
                 .transition(.move(edge: .top).combined(with: .opacity))
         }

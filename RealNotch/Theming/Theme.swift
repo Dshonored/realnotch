@@ -26,6 +26,8 @@ struct Theme: Codable, Hashable, Identifiable {
         var border: String = "#FFFFFF17"
         var divider: String = "#FFFFFF14"
         var pin: String = "#FFCF3FFF"
+        /// The "active / live / success" accent — status dot, Keep Awake, copy feedback.
+        var success: String = "#30D158FF"
     }
 
     struct Shape: Codable, Hashable {
@@ -92,6 +94,7 @@ extension Theme.Colors {
         border = c.or(String.self, .border, d.border)
         divider = c.or(String.self, .divider, d.divider)
         pin = c.or(String.self, .pin, d.pin)
+        success = c.or(String.self, .success, d.success)
     }
 }
 

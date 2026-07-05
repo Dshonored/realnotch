@@ -29,7 +29,9 @@ struct MusicView: View {
                         .foregroundStyle(Color(hex: theme.colors.textSecondary))
                         .lineLimit(1)
 
-                    ProgressBar(value: nowPlaying.progress, color: Color(hex: theme.colors.textPrimary))
+                    ProgressBar(value: nowPlaying.progress,
+                                color: Color(hex: theme.colors.textPrimary),
+                                track: Color(hex: theme.colors.textPrimary).opacity(0.16))
                         .frame(height: 4)
                         .padding(.top, 6)
                 }
@@ -40,9 +42,9 @@ struct MusicView: View {
                 Button { nowPlaying.playPause() } label: {
                     Image(systemName: nowPlaying.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 14))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Color(hex: theme.colors.background))
                         .frame(width: 40, height: 40)
-                        .background(Circle().fill(.white))
+                        .background(Circle().fill(Color(hex: theme.colors.textPrimary)))
                 }
                 .buttonStyle(.plain)
                 control("forward.fill") { nowPlaying.next() }
@@ -95,11 +97,12 @@ struct MusicView: View {
 struct ProgressBar: View {
     let value: Double
     var color: Color
+    var track: Color
 
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(.white.opacity(0.16))
+                Capsule().fill(track)
                 Capsule().fill(color).frame(width: geo.size.width * value)
             }
         }

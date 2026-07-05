@@ -41,7 +41,7 @@ struct NotchPanel: View {
                 tabPill(tab)
             }
             Circle()
-                .fill(Color(hex: "#30D158FF"))
+                .fill(Color(hex: theme.colors.success))
                 .frame(width: 5, height: 5)
                 .padding(.leading, 2)
         }
@@ -64,7 +64,7 @@ struct NotchPanel: View {
             .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: 9)
-                    .fill(active ? Color.white.opacity(0.14) : .clear)
+                    .fill(active ? Color(hex: theme.colors.textPrimary).opacity(0.14) : .clear)
             )
             .contentShape(Rectangle())
             .onHover { if $0 { appState.tab = tab } }
@@ -97,7 +97,7 @@ struct NotchPanel: View {
             Image(systemName: caffeine.isActive ? "moon.fill" : "moon")
                 .font(.system(size: 14))
                 .foregroundStyle(caffeine.isActive
-                    ? Color(hex: "#30D158FF")
+                    ? Color(hex: theme.colors.success)
                     : Color(hex: theme.colors.textSecondary))
             VStack(alignment: .leading, spacing: 1) {
                 Text("Keep Awake")
@@ -114,7 +114,7 @@ struct NotchPanel: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Color(hex: theme.colors.textSecondary))
                     .frame(width: 30, height: 30)
-                    .background(RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(0.07)))
+                    .background(RoundedRectangle(cornerRadius: 9).fill(Color(hex: theme.colors.textPrimary).opacity(0.07)))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Settings")
@@ -126,7 +126,7 @@ struct NotchPanel: View {
     private var awakeToggle: some View {
         Button { caffeine.toggle() } label: {
             RoundedRectangle(cornerRadius: 20)
-                .fill(caffeine.isActive ? Color(hex: "#30D158FF") : Color.white.opacity(0.2))
+                .fill(caffeine.isActive ? Color(hex: theme.colors.success) : Color(hex: theme.colors.textPrimary).opacity(0.2))
                 .frame(width: 34, height: 20)
                 .overlay(alignment: caffeine.isActive ? .trailing : .leading) {
                     Circle()

@@ -54,7 +54,7 @@ struct ClipboardItemRow: View {
             .background(
                 RoundedRectangle(cornerRadius: theme.shape.itemCornerRadius)
                     .fill(flashing
-                        ? Color(hex: "#30D158FF").opacity(0.28)
+                        ? Color(hex: theme.colors.success).opacity(0.28)
                         : Color(hex: theme.colors.surface).opacity(hovered ? 1.6 : 1))
             )
         }

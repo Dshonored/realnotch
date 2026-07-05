@@ -3,12 +3,14 @@
   "name": "Dark Glass",
   "author": "RealNotch",
   "colors": {
-    "background": "#0A0A0CE6",
-    "surface": "#2C2C2E99",
+    "background": "#0A0A0CBF",
+    "surface": "#FFFFFF14",
     "textPrimary": "#F2F2F7FF",
     "textSecondary": "#8E8E93FF",
     "accent": "#64D2FFFF",
-    "stackChip": "#FFD60AFF"
+    "stackChip": "#64D2FFFF",
+    "success": "#30D158FF",
+    "pin": "#FFD60AFF"
   },
   "shape": {
     "notchCornerRadius": 14,
