@@ -16,6 +16,7 @@ event=$(printf '%s' "$input" | jq -r '.hook_event_name // empty')
 cwd=$(printf '%s' "$input"  | jq -r '.cwd // empty')
 ntype=$(printf '%s' "$input" | jq -r '.notification_type // empty')
 tool=$(printf '%s' "$input"  | jq -r '.tool_name // empty')
+name=$(printf '%s' "$input"  | jq -r '.session_name // empty')
 file="$DIR/$sid.json"
 
 case "$event" in
@@ -36,7 +37,7 @@ case "$event" in
     status="working"; detail="" ;;
 esac
 
-jq -n --arg sid "$sid" --arg cwd "$cwd" --arg status "$status" --arg detail "$detail" \
-  '{session_id:$sid, cwd:$cwd, status:$status, detail:$detail, updatedAt: now}' \
+jq -n --arg sid "$sid" --arg name "$name" --arg cwd "$cwd" --arg status "$status" --arg detail "$detail" \
+  '{session_id:$sid, name:$name, cwd:$cwd, status:$status, detail:$detail, updatedAt: now}' \
   > "$file.tmp" 2>/dev/null && mv "$file.tmp" "$file"
 exit 0
