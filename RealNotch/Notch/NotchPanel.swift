@@ -7,6 +7,7 @@ struct NotchPanel: View {
     let notes: NotesStore
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
+    let agents: AgentStore
     let width: CGFloat
     /// Reserved for the physical notch — content starts below it so the header
     /// (tabs) isn't hidden behind the hardware notch on notch Macs.
@@ -85,6 +86,7 @@ struct NotchPanel: View {
     private var sectionBody: some View {
         switch appState.tab {
         case .clipboard: ClipboardHistoryView(clipboard: clipboard, onCopy: onCopy)
+        case .agents: AgentsView(agents: agents)
         case .music: MusicView(nowPlaying: nowPlaying)
         case .notes: NotesView(notes: notes)
         }

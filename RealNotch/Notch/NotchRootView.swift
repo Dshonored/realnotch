@@ -17,11 +17,12 @@ struct NotchRootView: View {
     let notes: NotesStore
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
+    let agents: AgentStore
 
     var body: some View {
         NotchContainer(
             appState: appState, clipboard: clipboard,
-            notes: notes, nowPlaying: nowPlaying, caffeine: caffeine
+            notes: notes, nowPlaying: nowPlaying, caffeine: caffeine, agents: agents
         )
         .environment(\.theme, themeStore.current)
     }
@@ -33,6 +34,7 @@ private struct NotchContainer: View {
     let notes: NotesStore
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
+    let agents: AgentStore
 
     @Environment(\.theme) private var theme
     @State private var hoverTask: Task<Void, Never>?
@@ -48,15 +50,19 @@ private struct NotchContainer: View {
     private let notchWidth: CGFloat
     private let notchHeight: CGFloat
 
-    private var collapsedWidth: CGFloat { max(notchWidth, 190) }
+    // Wings of visible screen on each side of the physical notch where the idle
+    // glyphs live. Without them the glyphs render behind the camera cutout.
+    private let glyphWing: CGFloat = 62
+    private var collapsedWidth: CGFloat { notchWidth + glyphWing * 2 }
 
     init(appState: AppState, clipboard: ClipboardStore, notes: NotesStore,
-         nowPlaying: NowPlaying, caffeine: CaffeineManager) {
+         nowPlaying: NowPlaying, caffeine: CaffeineManager, agents: AgentStore) {
         self.appState = appState
         self.clipboard = clipboard
         self.notes = notes
         self.nowPlaying = nowPlaying
         self.caffeine = caffeine
+        self.agents = agents
         let g = NotchDetector.detect()
         notchWidth = g?.notchWidth ?? 200
         notchHeight = g?.notchHeight ?? 32
@@ -74,13 +80,19 @@ private struct NotchContainer: View {
             // gives a real "grow out of the notch" reveal instead of a pop.
             panelBackground(shape, expanded: expanded)
 
-            CollapsedNotchView(clipboardCount: clipboard.items.count, isPlaying: nowPlaying.isPlaying)
+            CollapsedNotchView(
+                clipboardCount: clipboard.items.count,
+                isPlaying: nowPlaying.isPlaying,
+                keepAwake: caffeine.isActive,
+                agentsWaiting: agents.waitingCount,
+                notchWidth: notchWidth
+            )
                 .frame(width: collapsedWidth, height: notchHeight)
                 .opacity(expanded ? 0 : 1)
 
             NotchPanel(
                 appState: appState, clipboard: clipboard, notes: notes,
-                nowPlaying: nowPlaying, caffeine: caffeine,
+                nowPlaying: nowPlaying, caffeine: caffeine, agents: agents,
                 width: expandedWidth, notchHeight: notchHeight,
                 onCopy: showToast, openSettings: openAppSettings
             )

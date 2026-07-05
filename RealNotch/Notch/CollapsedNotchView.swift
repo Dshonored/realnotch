@@ -5,33 +5,59 @@ import SwiftUI
 struct CollapsedNotchView: View {
     let clipboardCount: Int
     let isPlaying: Bool
+    let keepAwake: Bool
+    let agentsWaiting: Int
+    /// Width of the physical notch. The glyphs must sit in the visible "wings"
+    /// beside it — anything drawn inside this column lands behind the camera
+    /// housing and is invisible.
+    let notchWidth: CGFloat
     @Environment(\.theme) private var theme
 
     var body: some View {
-        HStack {
-            HStack(spacing: 4) {
-                Image(systemName: "doc.on.clipboard").font(.system(size: 9))
-                Text("\(clipboardCount)").font(theme.font(theme.typography.captionSize))
+        HStack(spacing: 0) {
+            HStack(spacing: 6) {
+                if keepAwake {
+                    Image(systemName: "moon.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(Color(hex: theme.colors.success))
+                }
+                HStack(spacing: 4) {
+                    Image(systemName: "doc.on.clipboard").font(.system(size: 9))
+                    Text("\(clipboardCount)").font(theme.font(theme.typography.captionSize))
+                }
+                .foregroundStyle(Color(hex: theme.colors.textPrimary).opacity(0.55))
             }
-            .foregroundStyle(Color(hex: theme.colors.textPrimary).opacity(0.55))
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.trailing, 10)
 
-            Spacer()
-
+            // The notch column itself — a camera dot for synthetic notches,
+            // invisible behind the real cutout on notched Macs.
             Circle()
                 .fill(Color(hex: "#1A1A1CFF"))
                 .frame(width: 6, height: 6)
                 .overlay(Circle().strokeBorder(Color(hex: "#2B2B2EFF"), lineWidth: 1.2))
+                .frame(width: notchWidth)
 
-            Spacer()
-
-            HStack(spacing: 5) {
-                Image(systemName: "music.note").font(.system(size: 9))
-                Waveform(active: isPlaying, color: Color(hex: theme.colors.textPrimary))
-                    .frame(width: 12, height: 9)
+            HStack(spacing: 8) {
+                // An agent needs you — the whole point of the integration is to
+                // surface this without opening anything.
+                if agentsWaiting > 0 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "terminal.fill").font(.system(size: 9))
+                        Text("\(agentsWaiting)").font(theme.font(theme.typography.captionSize, weight: .bold))
+                    }
+                    .foregroundStyle(Color(hex: theme.colors.success))
+                }
+                HStack(spacing: 5) {
+                    Image(systemName: "music.note").font(.system(size: 9))
+                    Waveform(active: isPlaying, color: Color(hex: theme.colors.textPrimary))
+                        .frame(width: 12, height: 9)
+                }
+                .foregroundStyle(Color(hex: theme.colors.textPrimary).opacity(0.55))
             }
-            .foregroundStyle(Color(hex: theme.colors.textPrimary).opacity(0.55))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 10)
         }
-        .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -40,7 +66,7 @@ struct CollapsedNotchView: View {
 struct Waveform: View {
     var active: Bool
     var color: Color
-    @State private var phase = false
+    @State private var animating = false
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 1.5) {
@@ -48,13 +74,16 @@ struct Waveform: View {
                 Capsule()
                     .fill(color)
                     .frame(width: 2)
-                    .scaleEffect(y: active ? (phase ? 1 : 0.3) : 0.3, anchor: .bottom)
+                    .scaleEffect(y: animating ? 1 : 0.3, anchor: .bottom)
                     .animation(
                         active ? .easeInOut(duration: 0.45).repeatForever().delay(Double(i) * 0.15) : .default,
-                        value: phase
+                        value: animating
                     )
             }
         }
-        .onAppear { phase = true }
+        // Drive the pulse off `active` so it restarts whenever playback starts —
+        // a one-shot onAppear gets "used up" while paused and never re-triggers.
+        .onAppear { animating = active }
+        .onChange(of: active) { _, now in animating = now }
     }
 }

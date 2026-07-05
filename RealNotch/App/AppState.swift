@@ -2,12 +2,13 @@ import Foundation
 import Observation
 
 enum NotchTab: String, CaseIterable, Identifiable {
-    case clipboard, music, notes
+    case clipboard, agents, music, notes
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .clipboard: "Clipboard"
+        case .agents: "Agents"
         case .music: "Music"
         case .notes: "Notes"
         }
@@ -17,6 +18,7 @@ enum NotchTab: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .clipboard: "doc.on.clipboard"
+        case .agents: "terminal"
         case .music: "music.note"
         case .notes: "note.text"
         }

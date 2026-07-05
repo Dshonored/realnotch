@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let notesStore = NotesStore()
     let nowPlaying = NowPlaying()
     let caffeine = CaffeineManager()
+    let agentStore = AgentStore()
     private(set) var settingsController: SettingsWindowController?
     private var monitor: ClipboardMonitor?
     private var windowController: NotchWindowController?
@@ -41,7 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowController = NotchWindowController(
             content: NotchRootView(
                 appState: appState, themeStore: themeStore, clipboard: clipboardStore,
-                notes: notesStore, nowPlaying: nowPlaying, caffeine: caffeine
+                notes: notesStore, nowPlaying: nowPlaying, caffeine: caffeine, agents: agentStore
             )
         )
     }
