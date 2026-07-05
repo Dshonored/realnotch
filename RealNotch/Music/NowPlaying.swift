@@ -15,6 +15,9 @@ final class NowPlaying {
     var artist = ""
     var appName = ""
     var artwork: NSImage?
+    /// The playing app's icon — a fallback "photo" when the source has no artwork
+    /// (browsers/YouTube rarely provide album art; Music/Spotify do).
+    var appIcon: NSImage?
     var isPlaying = false
     var elapsed: Double = 0
     var duration: Double = 0
@@ -84,7 +87,7 @@ final class NowPlaying {
 
     private func apply(_ p: Payload?) {
         guard let p, let t = p.title, !t.isEmpty else {
-            title = ""; artist = ""; appName = ""; artwork = nil
+            title = ""; artist = ""; appName = ""; artwork = nil; appIcon = nil
             isPlaying = false; elapsed = 0; duration = 0
             return
         }
@@ -99,6 +102,8 @@ final class NowPlaying {
         } else {
             artwork = nil
         }
+        appIcon = NSWorkspace.shared.runningApplications
+            .first { $0.localizedName == appName }?.icon
     }
 
     private static func runOsascript() -> String? {

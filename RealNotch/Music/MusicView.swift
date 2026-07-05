@@ -24,7 +24,7 @@ struct MusicView: View {
                         .font(theme.font(theme.typography.titleSize, weight: .semibold))
                         .foregroundStyle(Color(hex: theme.colors.textPrimary))
                         .lineLimit(1)
-                    Text(nowPlaying.artist)
+                    Text(artistLine)
                         .font(theme.font(theme.typography.itemSize))
                         .foregroundStyle(Color(hex: theme.colors.textSecondary))
                         .lineLimit(1)
@@ -50,20 +50,36 @@ struct MusicView: View {
         }
     }
 
+    private var artistLine: String {
+        // "Artist · App", like the design's "M83 · Spotify".
+        [nowPlaying.artist, nowPlaying.appName]
+            .filter { !$0.isEmpty }
+            .joined(separator: " · ")
+    }
+
     @ViewBuilder
     private var artwork: some View {
-        if let image = nowPlaying.artwork {
-            Image(nsImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 58, height: 58)
-                .clipShape(.rect(cornerRadius: 11))
-        } else {
-            RoundedRectangle(cornerRadius: 11)
-                .fill(LinearGradient(colors: [Color(hex: "#FF5E7EFF"), Color(hex: "#A45CFFFF")],
-                                     startPoint: .topLeading, endPoint: .bottomTrailing))
-                .frame(width: 58, height: 58)
+        Group {
+            if let image = nowPlaying.artwork {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else if let icon = nowPlaying.appIcon {
+                // No album art (typical for browser sources) — show the app's icon.
+                Image(nsImage: icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding(8)
+                    .background(LinearGradient(colors: [Color(hex: "#2C2C2EFF"), Color(hex: "#1A1A1CFF")],
+                                               startPoint: .topLeading, endPoint: .bottomTrailing))
+            } else {
+                LinearGradient(colors: [Color(hex: "#FF5E7EFF"), Color(hex: "#A45CFFFF")],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .overlay(Image(systemName: "music.note").foregroundStyle(.white.opacity(0.85)))
+            }
         }
+        .frame(width: 58, height: 58)
+        .clipShape(.rect(cornerRadius: 11))
     }
 
     private func control(_ symbol: String, _ action: @escaping () -> Void) -> some View {

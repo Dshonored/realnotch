@@ -86,6 +86,9 @@ private struct NotchContainer: View {
         .clipShape(shape)
         .overlay(shape.stroke(Color(hex: theme.colors.border), lineWidth: expanded ? 1 : 0))
         .shadow(color: Color(hex: "#30D158FF").opacity(glow ? 0.5 : 0), radius: glow ? 26 : 0)
+        // Pin hover/tap to the visible notch shape. clipShape only clips drawing —
+        // without this the always-present (invisible) panel inflates the hit area.
+        .contentShape(shape)
         .animation(theme.spring, value: expanded)
         .animation(theme.spring, value: panelHeight)
         .animation(.easeOut(duration: 0.5), value: glow)
