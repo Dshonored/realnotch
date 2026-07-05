@@ -1,4 +1,14 @@
+import AppKit
 import SwiftUI
+
+/// Opens the SwiftUI `Settings` scene from outside the scene graph (our panel is a
+/// hosted NSPanel, so `@Environment(\.openSettings)` is a no-op here).
+func openAppSettings() {
+    NSApplication.shared.activate(ignoringOtherApps: true)
+    if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+    }
+}
 
 /// Root of the notch panel. Injects the current theme and holds all feature stores.
 struct NotchRootView: View {
@@ -26,7 +36,6 @@ private struct NotchContainer: View {
     let caffeine: CaffeineManager
 
     @Environment(\.theme) private var theme
-    @Environment(\.openSettings) private var openSettings
     @State private var hoverTask: Task<Void, Never>?
     @State private var copyToast: String?
     @State private var glow = false
@@ -74,7 +83,7 @@ private struct NotchContainer: View {
                 appState: appState, clipboard: clipboard, notes: notes,
                 nowPlaying: nowPlaying, caffeine: caffeine,
                 width: expandedWidth, notchHeight: notchHeight,
-                onCopy: showToast, openSettings: { openSettings() }
+                onCopy: showToast, openSettings: openAppSettings
             )
             .fixedSize(horizontal: false, vertical: true)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelHeight = $0 }
