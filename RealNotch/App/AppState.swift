@@ -12,6 +12,7 @@ struct NotchTab: Identifiable, Equatable {
         .init(id: "agents",    title: "Agents",    symbol: "terminal"),
         .init(id: "music",     title: "Music",     symbol: "music.note"),
         .init(id: "notes",     title: "Notes",     symbol: "note.text"),
+        .init(id: "launcher",  title: "Launcher",  symbol: "keyboard"),
     ]
 }
 

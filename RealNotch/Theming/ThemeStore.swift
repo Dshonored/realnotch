@@ -38,6 +38,34 @@ final class ThemeStore {
         }
     }
 
+    /// Install a skin from a `.json` file or a `.zip` of skins into the themes folder.
+    func install(from url: URL) {
+        if url.pathExtension.lowercased() == "json" {
+            let dest = Self.userThemesDirectory.appending(path: url.lastPathComponent)
+            try? FileManager.default.removeItem(at: dest)
+            try? FileManager.default.copyItem(at: url, to: dest)
+            reload()
+            return
+        }
+        // .zip — extract and copy any .json skins out
+        let tmp = FileManager.default.temporaryDirectory.appending(path: "rn-theme-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+        task.arguments = ["-x", "-k", url.path, tmp.path]
+        guard (try? task.run()) != nil else { return }
+        task.waitUntilExit()
+        if let en = FileManager.default.enumerator(at: tmp, includingPropertiesForKeys: nil) {
+            for case let f as URL in en where f.pathExtension.lowercased() == "json" && !f.lastPathComponent.hasPrefix(".") {
+                let dest = Self.userThemesDirectory.appending(path: f.lastPathComponent)
+                try? FileManager.default.removeItem(at: dest)
+                try? FileManager.default.copyItem(at: f, to: dest)
+            }
+        }
+        reload()
+    }
+
     func reload() {
         var loaded: [Theme] = [.default]
         let user = (try? FileManager.default.contentsOfDirectory(

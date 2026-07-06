@@ -19,11 +19,13 @@ struct NotchRootView: View {
     let caffeine: CaffeineManager
     let agents: AgentStore
     let plugins: PluginStore
+    let launcher: LauncherStore
 
     var body: some View {
         NotchContainer(
             appState: appState, clipboard: clipboard,
-            notes: notes, nowPlaying: nowPlaying, caffeine: caffeine, agents: agents, plugins: plugins
+            notes: notes, nowPlaying: nowPlaying, caffeine: caffeine,
+            agents: agents, plugins: plugins, launcher: launcher
         )
         .environment(\.theme, themeStore.current)
     }
@@ -37,6 +39,7 @@ private struct NotchContainer: View {
     let caffeine: CaffeineManager
     let agents: AgentStore
     let plugins: PluginStore
+    let launcher: LauncherStore
 
     @Environment(\.theme) private var theme
     @State private var hoverTask: Task<Void, Never>?
@@ -64,7 +67,8 @@ private struct NotchContainer: View {
     }
 
     init(appState: AppState, clipboard: ClipboardStore, notes: NotesStore,
-         nowPlaying: NowPlaying, caffeine: CaffeineManager, agents: AgentStore, plugins: PluginStore) {
+         nowPlaying: NowPlaying, caffeine: CaffeineManager, agents: AgentStore,
+         plugins: PluginStore, launcher: LauncherStore) {
         self.appState = appState
         self.clipboard = clipboard
         self.notes = notes
@@ -72,6 +76,7 @@ private struct NotchContainer: View {
         self.caffeine = caffeine
         self.agents = agents
         self.plugins = plugins
+        self.launcher = launcher
         let g = NotchDetector.detect()
         notchWidth = g?.notchWidth ?? 200
         notchHeight = g?.notchHeight ?? 32
@@ -101,7 +106,8 @@ private struct NotchContainer: View {
 
             NotchPanel(
                 appState: appState, clipboard: clipboard, notes: notes,
-                nowPlaying: nowPlaying, caffeine: caffeine, agents: agents, plugins: plugins,
+                nowPlaying: nowPlaying, caffeine: caffeine, agents: agents,
+                plugins: plugins, launcher: launcher,
                 width: expandedWidth, notchHeight: notchHeight,
                 onCopy: showToast, openSettings: openAppSettings
             )

@@ -24,8 +24,9 @@ Hover the notch and it grows into a tabbed panel:
 - **🖥 Agents** — live [Claude Code](https://claude.com/claude-code) sessions: which are working, which are **waiting on you**, which are done. Click to jump to the terminal. The collapsed notch shows a badge when an agent needs you. ([setup](integrations/claude-code/README.md))
 - **♪ Music** — now playing from any source (Apple Music, Spotify, browsers) with artwork and transport controls. Works around Apple's macOS 15.4+ MediaRemote restriction.
 - **🗒 Notes** — quick notes, pinned and persisted locally.
-- **🌙 Keep Awake** — a real power assertion so your display won't sleep (same mechanism as `caffeinate`).
-- **🧩 Plugins** — write your own notch panels in **Lua**. A sandboxed runtime, a tiny host API, live-reloaded from a folder. See [docs/PLUGINS.md](docs/PLUGINS.md).
+- **🌙 Keep Awake** — a real power assertion so your display won't sleep (same mechanism as `caffeinate`); remembers its state across restarts.
+- **⌨️ App Launcher** — bind a global hotkey to any app (record a shortcut, pick the app). System-wide, no permissions.
+- **🧩 Plugins** — write your own notch panels in **Lua**. Each renders its own tab. Sandboxed runtime, live-reload, install from `.zip`. See [docs/PLUGINS.md](docs/PLUGINS.md).
 
 Plus a slim idle state showing live glyphs (clipboard count, music waveform, agents waiting) so a glance tells you what's happening — without opening anything.
 

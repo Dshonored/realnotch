@@ -28,13 +28,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let caffeine = CaffeineManager()
     let agentStore = AgentStore()
     let pluginStore = PluginStore()
+    let launcherStore = LauncherStore()
     private(set) var settingsController: SettingsWindowController?
     private var monitor: ClipboardMonitor?
     private var windowController: NotchWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.shared = self
-        settingsController = SettingsWindowController(themeStore: themeStore, clipboard: clipboardStore)
+        settingsController = SettingsWindowController(
+            themeStore: themeStore, clipboard: clipboardStore,
+            launcher: launcherStore, plugins: pluginStore
+        )
 
         let monitor = ClipboardMonitor(store: clipboardStore)
         monitor.start()
@@ -44,7 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             content: NotchRootView(
                 appState: appState, themeStore: themeStore, clipboard: clipboardStore,
                 notes: notesStore, nowPlaying: nowPlaying, caffeine: caffeine,
-                agents: agentStore, plugins: pluginStore
+                agents: agentStore, plugins: pluginStore, launcher: launcherStore
             )
         )
     }

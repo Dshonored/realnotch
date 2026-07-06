@@ -8,6 +8,12 @@ import Observation
 final class CaffeineManager {
     private(set) var isActive = false
     private var assertionID: IOPMAssertionID = IOPMAssertionID(0)
+    private let key = "keepAwake"
+
+    /// Restore the last state on launch — Keep Awake persists across restarts.
+    init() {
+        if UserDefaults.standard.bool(forKey: key) { activate() }
+    }
 
     func toggle() {
         isActive ? deactivate() : activate()
@@ -25,6 +31,7 @@ final class CaffeineManager {
         if result == kIOReturnSuccess {
             assertionID = id
             isActive = true
+            UserDefaults.standard.set(true, forKey: key)
         }
     }
 
@@ -33,6 +40,7 @@ final class CaffeineManager {
         IOPMAssertionRelease(assertionID)
         assertionID = IOPMAssertionID(0)
         isActive = false
+        UserDefaults.standard.set(false, forKey: key)
     }
 
     deinit {
