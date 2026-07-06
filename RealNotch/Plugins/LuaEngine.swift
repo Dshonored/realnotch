@@ -15,8 +15,14 @@ final class LuaPlugin: Identifiable {
     let icon: String
     let path: String
     let ref: Int32
-    init(name: String, icon: String, path: String, ref: Int32) {
+    /// Whether the plugin has a render() — i.e. it should get its own notch tab.
+    let hasRender: Bool
+    /// App-launch hotkeys the plugin declared.
+    let bindings: [HotKeyManager.Binding]
+    init(name: String, icon: String, path: String, ref: Int32,
+         hasRender: Bool, bindings: [HotKeyManager.Binding]) {
         self.name = name; self.icon = icon; self.path = path; self.ref = ref
+        self.hasRender = hasRender; self.bindings = bindings
     }
 }
 
@@ -76,8 +82,31 @@ final class LuaEngine {
         let fallback = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
         let name = field(-1, "name") ?? fallback
         let icon = field(-1, "icon") ?? "puzzlepiece.extension"
+
+        lua_getfield(L, -1, "render")
+        let hasRender = lua_type(L, -1) == LUA_TFUNCTION
+        pop(1)
+
+        var bindings: [HotKeyManager.Binding] = []
+        lua_getfield(L, -1, "bindings") // module table now at -2
+        if lua_type(L, -1) == LUA_TTABLE {
+            let n = luaL_len(L, -1)
+            var i: lua_Integer = 1
+            while i <= n {
+                lua_geti(L, -1, i)
+                if lua_type(L, -1) == LUA_TTABLE,
+                   let key = field(-1, "key"), let app = field(-1, "app") {
+                    bindings.append(.init(key: key, app: app))
+                }
+                pop(1)
+                i += 1
+            }
+        }
+        pop(1) // pop bindings; module table back at -1
+
         let ref = luaL_ref(L, ln_registryindex()) // pops the module table, stores a ref
-        return LuaPlugin(name: name, icon: icon, path: path, ref: ref)
+        return LuaPlugin(name: name, icon: icon, path: path, ref: ref,
+                         hasRender: hasRender, bindings: bindings)
     }
 
     func unload(_ plugin: LuaPlugin) {

@@ -12,8 +12,12 @@ final class PluginStore {
         .appending(path: "RealNotch/Plugins")
 
     private let engine = LuaEngine()
+    private let hotkeys = HotKeyManager()
     private var watcher: DispatchSourceFileSystemObject?
     private var timer: Timer?
+
+    /// Plugins that render — each gets its own notch tab.
+    var tabPlugins: [LuaPlugin] { plugins.filter(\.hasRender) }
 
     init() {
         try? FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
@@ -36,6 +40,7 @@ final class PluginStore {
         for url in files {
             if let plugin = engine.load(path: url.path) { plugins.append(plugin) }
         }
+        hotkeys.setBindings(plugins.flatMap(\.bindings))
         refreshAll()
     }
 
@@ -60,20 +65,24 @@ final class PluginStore {
         let dest = Self.directory.appending(path: "example.lua")
         guard !FileManager.default.fileExists(atPath: dest.path) else { return }
         let script = """
-        -- RealNotch example plugin. Copy this file to make your own.
-        -- Return a table with: name, icon (an SF Symbol), and render().
-        -- render() returns a list of rows: { title = "...", subtitle = "..." }
-        -- Host API: notch.clipboard() -> string, notch.time() -> unix seconds
+        -- RealNotch example plugin: App Launcher.
+        -- Bind a global hotkey to launch/focus an app. Edit the list below.
+        -- Keys: modifiers are cmd / option / ctrl / shift, e.g. "option+1", "cmd+shift+k".
+        local binds = {
+          { key = "option+1", app = "Google Chrome" },
+          { key = "option+2", app = "Safari" },
+          { key = "option+3", app = "Ghostty" },
+        }
         return {
-          name = "Hello Lua",
-          icon = "puzzlepiece.extension",
-          render = function()
-            local clip = notch.clipboard()
-            return {
-              { title = "Plugins work!", subtitle = "edit example.lua to change this" },
-              { title = "Clipboard length", subtitle = tostring(#clip) .. " characters" },
-              { title = "Math from Lua", subtitle = "2^10 = " .. tostring(2 ^ 10) },
-            }
+          name = "Launcher",
+          icon = "keyboard",
+          bindings = binds,          -- RealNotch registers these global hotkeys
+          render = function()        -- and this tab lists them
+            local rows = {}
+            for _, b in ipairs(binds) do
+              rows[#rows + 1] = { title = b.app, subtitle = b.key }
+            end
+            return rows
           end
         }
         """

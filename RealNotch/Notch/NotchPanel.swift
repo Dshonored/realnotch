@@ -51,14 +51,17 @@ struct NotchPanel: View {
         .padding(.vertical, 8)
     }
 
+    // Built-in tabs, then one tab per plugin that renders.
     private var visibleTabs: [NotchTab] {
-        NotchTab.allCases.filter { $0 != .plugins || !plugins.plugins.isEmpty }
+        NotchTab.builtins + plugins.tabPlugins.map {
+            NotchTab(id: "plugin:\($0.id.uuidString)", title: $0.name, symbol: $0.icon)
+        }
     }
 
     // Only the active tab shows its label — inactive tabs are icon-only so the row
     // fits however many tabs (incl. plugins) are present.
     private func tabPill(_ tab: NotchTab) -> some View {
-        let active = appState.tab == tab
+        let active = appState.tabID == tab.id
         return HStack(spacing: 5) {
             Image(systemName: tab.symbol)
                 .font(.system(size: 11, weight: .semibold))
@@ -77,8 +80,8 @@ struct NotchPanel: View {
                     .fill(active ? Color(hex: theme.colors.textPrimary).opacity(0.14) : .clear)
             )
             .contentShape(Rectangle())
-            .onHover { if $0 { appState.tab = tab } }
-            .onTapGesture { appState.tab = tab }
+            .onHover { if $0 { appState.tabID = tab.id } }
+            .onTapGesture { appState.tabID = tab.id }
             .accessibilityLabel(tab.title)
     }
 
@@ -93,12 +96,18 @@ struct NotchPanel: View {
 
     @ViewBuilder
     private var sectionBody: some View {
-        switch appState.tab {
-        case .clipboard: ClipboardHistoryView(clipboard: clipboard, onCopy: onCopy)
-        case .agents: AgentsView(agents: agents)
-        case .music: MusicView(nowPlaying: nowPlaying)
-        case .notes: NotesView(notes: notes)
-        case .plugins: PluginsView(plugins: plugins)
+        switch appState.tabID {
+        case "clipboard": ClipboardHistoryView(clipboard: clipboard, onCopy: onCopy)
+        case "agents": AgentsView(agents: agents)
+        case "music": MusicView(nowPlaying: nowPlaying)
+        case "notes": NotesView(notes: notes)
+        default:
+            if let plugin = plugins.tabPlugins.first(where: { "plugin:\($0.id.uuidString)" == appState.tabID }) {
+                PluginTabView(plugin: plugin, plugins: plugins)
+            } else {
+                // Selected plugin tab went away (uninstalled) — fall back to clipboard.
+                ClipboardHistoryView(clipboard: clipboard, onCopy: onCopy)
+            }
         }
     }
 

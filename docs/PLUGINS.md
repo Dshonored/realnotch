@@ -1,7 +1,8 @@
 # Writing a RealNotch plugin (Lua)
 
-A plugin is a single **Lua** file. It adds a section to the notch's **Plugins** tab.
-No build step, no compiling — drop it in and it loads live.
+A plugin is a single **Lua** file. A plugin with a `render()` gets **its own tab** in
+the notch, right alongside Clipboard / Music / Notes. A plugin can also declare
+**hotkeys** to launch apps. No build step — drop it in and it loads live.
 
 ## Install
 
@@ -34,6 +35,33 @@ return {
 ```
 
 `render()` is called every couple of seconds, so a plugin can show live data.
+`render` is optional — a plugin with only `bindings` (below) runs in the background
+without a tab.
+
+## Hotkeys — launch apps
+
+Declare a `bindings` list and RealNotch registers those as **global** hotkeys
+(system-wide, no Accessibility permission). Each fires launches or focuses an app.
+
+```lua
+local binds = {
+  { key = "option+1", app = "Google Chrome" },
+  { key = "cmd+shift+k", app = "Ghostty" },
+}
+return {
+  name = "Launcher", icon = "keyboard",
+  bindings = binds,
+  render = function()               -- optional: a tab listing the bindings
+    local rows = {}
+    for _, b in ipairs(binds) do rows[#rows+1] = { title = b.app, subtitle = b.key } end
+    return rows
+  end
+}
+```
+
+Modifiers: `cmd` · `option` (or `alt`) · `ctrl` · `shift`. Keys: letters, digits,
+`space`, `return`, `tab`, arrows. The **app** is its display name ("Google Chrome").
+This is the seeded `example.lua` — edit it to bind your own apps.
 
 ## Host API
 

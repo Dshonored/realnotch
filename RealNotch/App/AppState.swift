@@ -1,34 +1,22 @@
 import Foundation
 import Observation
 
-enum NotchTab: String, CaseIterable, Identifiable {
-    case clipboard, agents, music, notes, plugins
-    var id: String { rawValue }
+/// A tab in the expanded notch — either a built-in section or a plugin.
+struct NotchTab: Identifiable, Equatable {
+    let id: String        // "clipboard" … or "plugin:<uuid>"
+    let title: String
+    let symbol: String    // SF Symbol
 
-    var title: String {
-        switch self {
-        case .clipboard: "Clipboard"
-        case .agents: "Agents"
-        case .music: "Music"
-        case .notes: "Notes"
-        case .plugins: "Plugins"
-        }
-    }
-
-    /// SF Symbol name for the tab.
-    var symbol: String {
-        switch self {
-        case .clipboard: "doc.on.clipboard"
-        case .agents: "terminal"
-        case .music: "music.note"
-        case .notes: "note.text"
-        case .plugins: "puzzlepiece.extension"
-        }
-    }
+    static let builtins: [NotchTab] = [
+        .init(id: "clipboard", title: "Clipboard", symbol: "doc.on.clipboard"),
+        .init(id: "agents",    title: "Agents",    symbol: "terminal"),
+        .init(id: "music",     title: "Music",     symbol: "music.note"),
+        .init(id: "notes",     title: "Notes",     symbol: "note.text"),
+    ]
 }
 
 @Observable
 final class AppState {
     var isExpanded = false
-    var tab: NotchTab = .clipboard
+    var tabID: String = "clipboard"
 }
