@@ -21,8 +21,8 @@ final class PluginStore {
         try? FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
         reload()
         watch()
-        // Re-run render() periodically so live plugins stay fresh.
-        timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+        // Re-run render() every second so time-based plugins (clock, stopwatch) tick.
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             self?.refreshAll()
         }
     }
