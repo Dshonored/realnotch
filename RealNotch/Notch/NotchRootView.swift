@@ -50,10 +50,16 @@ private struct NotchContainer: View {
     private let notchWidth: CGFloat
     private let notchHeight: CGFloat
 
-    // Wings of visible screen on each side of the physical notch where the idle
-    // glyphs live. Without them the glyphs render behind the camera cutout.
-    private let glyphWing: CGFloat = 62
-    private var collapsedWidth: CGFloat { notchWidth + glyphWing * 2 }
+    // Sized to content so the idle glyphs clear the physical notch — a fixed
+    // wing overflows and clips once agents + music + clipboard all show at once.
+    private var collapsedWidth: CGFloat {
+        CollapsedNotchView.idealWidth(
+            clipboardCount: clipboard.items.count,
+            keepAwake: caffeine.isActive,
+            agentsWaiting: agents.waitingCount,
+            notchWidth: notchWidth
+        )
+    }
 
     init(appState: AppState, clipboard: ClipboardStore, notes: NotesStore,
          nowPlaying: NowPlaying, caffeine: CaffeineManager, agents: AgentStore) {

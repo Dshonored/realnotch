@@ -13,6 +13,19 @@ struct CollapsedNotchView: View {
     let notchWidth: CGFloat
     @Environment(\.theme) private var theme
 
+    /// Width the idle bar needs so each wing clears the physical notch and holds
+    /// its glyphs. Wings are sized to the *wider* side so the camera column stays
+    /// centered on the notch. Glyph widths are estimated (tiny 9pt caption text) —
+    /// tune the constants if a skin's font runs wide.
+    static func idealWidth(clipboardCount: Int, keepAwake: Bool,
+                           agentsWaiting: Int, notchWidth: CGFloat) -> CGFloat {
+        func textW(_ n: Int) -> CGFloat { 7 * CGFloat(String(n).count) }
+        let left = (keepAwake ? 15 : 0) + 13 + textW(clipboardCount)
+        let right = (agentsWaiting > 0 ? 13 + textW(agentsWaiting) + 8 : 0) + 28  // + music glyph
+        let wing = max(left, right) + 14
+        return notchWidth + wing * 2
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             HStack(spacing: 6) {
