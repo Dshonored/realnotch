@@ -7,6 +7,7 @@ struct LauncherView: View {
     let openSettings: () -> Void
     @Environment(\.theme) private var theme
     @State private var apps: [AppInfo] = []
+    @State private var pending: AppInfo?   // app chosen, awaiting its shortcut
 
     var body: some View {
         VStack(spacing: 7) {
@@ -14,9 +15,53 @@ struct LauncherView: View {
                 Button { launcher.launch(b) } label: { row(b) }
                     .buttonStyle(.plain)
             }
-            addMenu
+            if let pending {
+                chooseShortcut(for: pending)
+            } else {
+                addMenu
+            }
         }
         .onAppear { if apps.isEmpty { apps = InstalledApps.all() } }
+    }
+
+    // Step 2: pick a shortcut for the chosen app, then it's ready.
+    private func chooseShortcut(for app: AppInfo) -> some View {
+        HStack(spacing: 8) {
+            Image(nsImage: app.icon).resizable().frame(width: 18, height: 18)
+            Menu {
+                ForEach(presets, id: \.self) { key in
+                    Button(Shortcut.display(key)) {
+                        launcher.add(app: app.name, key: key, path: app.path)
+                        pending = nil
+                    }
+                }
+            } label: {
+                Text("Pick a shortcut for \(app.name)")
+                    .font(theme.font(theme.typography.itemSize, weight: .semibold))
+                    .foregroundStyle(Color(hex: theme.colors.accent))
+            }
+            .menuStyle(.borderlessButton)
+            Spacer(minLength: 0)
+            Button { pending = nil } label: {
+                Image(systemName: "xmark.circle.fill").foregroundStyle(Color(hex: theme.colors.textSecondary))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 9)
+        .background(
+            RoundedRectangle(cornerRadius: theme.shape.itemCornerRadius)
+                .fill(Color(hex: theme.colors.accent).opacity(0.12))
+        )
+    }
+
+    // Free shortcuts to offer: ⌥, ⌃⌥, ⌘⌥ + a digit.
+    private var presets: [String] {
+        var all: [String] = []
+        for prefix in ["option", "control+option", "command+option"] {
+            for n in 1...9 { all.append("\(prefix)+\(n)") }
+        }
+        return all.filter { launcher.appBound(to: $0) == nil }
     }
 
     private func row(_ b: AppBinding) -> some View {
@@ -52,10 +97,10 @@ struct LauncherView: View {
 
     @ViewBuilder
     private var addMenu: some View {
-        if launcher.nextFreeKey() != nil {
+        if !presets.isEmpty {
             Menu {
                 ForEach(apps) { a in
-                    Button { launcher.quickAdd(app: a.name, path: a.path) } label: {
+                    Button { pending = a } label: {
                         Label { Text(a.name) } icon: { Image(nsImage: a.icon) }
                     }
                 }
