@@ -25,6 +25,7 @@ Hover the notch and it grows into a tabbed panel:
 - **♪ Music** — now playing from any source (Apple Music, Spotify, browsers) with artwork and transport controls. Works around Apple's macOS 15.4+ MediaRemote restriction.
 - **🗒 Notes** — quick notes, pinned and persisted locally.
 - **🌙 Keep Awake** — a real power assertion so your display won't sleep (same mechanism as `caffeinate`).
+- **🧩 Plugins** — write your own notch panels in **Lua**. A sandboxed runtime, a tiny host API, live-reloaded from a folder. See [docs/PLUGINS.md](docs/PLUGINS.md).
 
 Plus a slim idle state showing live glyphs (clipboard count, music waveform, agents waiting) so a glance tells you what's happening — without opening anything.
 
@@ -59,7 +60,7 @@ brew install create-dmg
 
 ## Roadmap
 
-- **Lua plugins** — write your own notch panels and actions in Lua.
+- A richer plugin host API (notes, now-playing, agents).
 - Media scrubbing, global hotkey, Sparkle auto-updates.
 
 ## Contributing

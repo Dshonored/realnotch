@@ -252,6 +252,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/RealNotch/Lua/vendor";
+				OTHER_CFLAGS = "-DLUA_USE_MACOSX";
+				SWIFT_OBJC_BRIDGING_HEADER = "RealNotch/Lua/lua-bridge.h";
 				PRODUCT_BUNDLE_IDENTIFIER = com.realnotch.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -275,6 +278,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/RealNotch/Lua/vendor";
+				OTHER_CFLAGS = "-DLUA_USE_MACOSX";
+				SWIFT_OBJC_BRIDGING_HEADER = "RealNotch/Lua/lua-bridge.h";
 				PRODUCT_BUNDLE_IDENTIFIER = com.realnotch.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

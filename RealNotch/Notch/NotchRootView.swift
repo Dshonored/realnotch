@@ -18,11 +18,12 @@ struct NotchRootView: View {
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
     let agents: AgentStore
+    let plugins: PluginStore
 
     var body: some View {
         NotchContainer(
             appState: appState, clipboard: clipboard,
-            notes: notes, nowPlaying: nowPlaying, caffeine: caffeine, agents: agents
+            notes: notes, nowPlaying: nowPlaying, caffeine: caffeine, agents: agents, plugins: plugins
         )
         .environment(\.theme, themeStore.current)
     }
@@ -35,6 +36,7 @@ private struct NotchContainer: View {
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
     let agents: AgentStore
+    let plugins: PluginStore
 
     @Environment(\.theme) private var theme
     @State private var hoverTask: Task<Void, Never>?
@@ -62,13 +64,14 @@ private struct NotchContainer: View {
     }
 
     init(appState: AppState, clipboard: ClipboardStore, notes: NotesStore,
-         nowPlaying: NowPlaying, caffeine: CaffeineManager, agents: AgentStore) {
+         nowPlaying: NowPlaying, caffeine: CaffeineManager, agents: AgentStore, plugins: PluginStore) {
         self.appState = appState
         self.clipboard = clipboard
         self.notes = notes
         self.nowPlaying = nowPlaying
         self.caffeine = caffeine
         self.agents = agents
+        self.plugins = plugins
         let g = NotchDetector.detect()
         notchWidth = g?.notchWidth ?? 200
         notchHeight = g?.notchHeight ?? 32
@@ -98,7 +101,7 @@ private struct NotchContainer: View {
 
             NotchPanel(
                 appState: appState, clipboard: clipboard, notes: notes,
-                nowPlaying: nowPlaying, caffeine: caffeine, agents: agents,
+                nowPlaying: nowPlaying, caffeine: caffeine, agents: agents, plugins: plugins,
                 width: expandedWidth, notchHeight: notchHeight,
                 onCopy: showToast, openSettings: openAppSettings
             )

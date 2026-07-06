@@ -8,6 +8,7 @@ struct NotchPanel: View {
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
     let agents: AgentStore
+    let plugins: PluginStore
     let width: CGFloat
     /// Reserved for the physical notch — content starts below it so the header
     /// (tabs) isn't hidden behind the hardware notch on notch Macs.
@@ -38,7 +39,7 @@ struct NotchPanel: View {
         HStack(spacing: 6) {
             cameraDot
                 .padding(.trailing, 4)
-            ForEach(NotchTab.allCases) { tab in
+            ForEach(visibleTabs) { tab in
                 tabPill(tab)
             }
             Circle()
@@ -50,13 +51,21 @@ struct NotchPanel: View {
         .padding(.vertical, 8)
     }
 
+    private var visibleTabs: [NotchTab] {
+        NotchTab.allCases.filter { $0 != .plugins || !plugins.plugins.isEmpty }
+    }
+
+    // Only the active tab shows its label — inactive tabs are icon-only so the row
+    // fits however many tabs (incl. plugins) are present.
     private func tabPill(_ tab: NotchTab) -> some View {
         let active = appState.tab == tab
         return HStack(spacing: 5) {
             Image(systemName: tab.symbol)
                 .font(.system(size: 11, weight: .semibold))
-            Text(tab.title)
-                .font(theme.font(theme.typography.itemSize, weight: .semibold))
+            if active {
+                Text(tab.title)
+                    .font(theme.font(theme.typography.itemSize, weight: .semibold))
+            }
         }
             .foregroundStyle(active
                 ? Color(hex: theme.colors.textPrimary)
@@ -89,6 +98,7 @@ struct NotchPanel: View {
         case .agents: AgentsView(agents: agents)
         case .music: MusicView(nowPlaying: nowPlaying)
         case .notes: NotesView(notes: notes)
+        case .plugins: PluginsView(plugins: plugins)
         }
     }
 

@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 enum NotchTab: String, CaseIterable, Identifiable {
-    case clipboard, agents, music, notes
+    case clipboard, agents, music, notes, plugins
     var id: String { rawValue }
 
     var title: String {
@@ -11,6 +11,7 @@ enum NotchTab: String, CaseIterable, Identifiable {
         case .agents: "Agents"
         case .music: "Music"
         case .notes: "Notes"
+        case .plugins: "Plugins"
         }
     }
 
@@ -21,6 +22,7 @@ enum NotchTab: String, CaseIterable, Identifiable {
         case .agents: "terminal"
         case .music: "music.note"
         case .notes: "note.text"
+        case .plugins: "puzzlepiece.extension"
         }
     }
 }
