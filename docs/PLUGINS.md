@@ -45,14 +45,42 @@ Nothing is installed by default. Add plugins yourself:
 - **Settings → Plugins → Install Plugin (.zip)…**, or
 - drop `.lua` files straight into the folder above.
 
+## Interactive rows
+
+Give a row an `action` function and it becomes clickable in the notch:
+
+```lua
+return {
+  name = "Quick", icon = "bolt",
+  render = function()
+    return {
+      { title = "Open Finder", action = function() notch.launch("Finder") end },
+    }
+  end
+}
+```
+
+## Global hotkeys
+
+Register a system-wide hotkey (no permissions) that runs a Lua function:
+
+```lua
+notch.hotkey("cmd+shift+j", function() notch.launch("Ghostty") end)
+```
+
+Put it at the top level of your plugin — it's registered when the plugin loads and
+re-registered on reload. Modifiers: `cmd` · `option` · `ctrl` · `shift`.
+
 ## Host API
 
-A global `notch` table exposes a small, read-only set of helpers:
+A global `notch` table exposes the host:
 
-| Call | Returns |
+| Call | Does |
 |---|---|
-| `notch.clipboard()` | the current clipboard text (string) |
-| `notch.time()` | current Unix time in seconds (number) |
+| `notch.clipboard()` | returns the current clipboard text (string) |
+| `notch.time()` | returns Unix time in seconds (number) |
+| `notch.launch(app)` | launches or focuses an app by name |
+| `notch.hotkey(key, fn)` | registers a global hotkey that calls `fn` |
 
 Example — a live clock and clipboard peek:
 

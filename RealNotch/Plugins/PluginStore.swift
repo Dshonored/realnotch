@@ -27,7 +27,10 @@ final class PluginStore {
         }
     }
 
+    func runAction(_ ref: Int32) { engine.callRef(ref) }
+
     func reload() {
+        engine.resetForReload()
         for p in plugins { engine.unload(p) }
         plugins = []
         output = [:]

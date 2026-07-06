@@ -1,33 +1,36 @@
 import AppKit
 import Carbon
 
-/// Registers global hotkeys via Carbon (system-wide, no Accessibility permission)
-/// and launches/focuses an app when one fires. Plugins declare the bindings.
+/// Registers global hotkeys via Carbon (system-wide, no Accessibility permission).
+/// A hotkey maps to a closure — used by the built-in launcher AND by Lua plugins.
 final class HotKeyManager {
-    struct Binding { let key: String; let app: String }
-
     private var refs: [EventHotKeyRef?] = []
-    private var appForID: [UInt32: String] = [:]
+    private var actions: [UInt32: () -> Void] = [:]
     private var handler: EventHandlerRef?
     private var nextID: UInt32 = 1
 
     init() { installHandler() }
 
-    /// Replace all registered hotkeys with this set.
-    func setBindings(_ bindings: [Binding]) {
+    func unregisterAll() {
         for r in refs { if let r { UnregisterEventHotKey(r) } }
         refs = []
-        appForID = [:]
-        for b in bindings {
-            guard let (code, mods) = parse(b.key) else { continue }
-            let id = nextID; nextID += 1
-            let hotID = EventHotKeyID(signature: 0x524E4348 /* 'RNCH' */, id: id)
-            var ref: EventHotKeyRef?
-            if RegisterEventHotKey(code, mods, hotID, GetApplicationEventTarget(), 0, &ref) == noErr {
-                refs.append(ref)
-                appForID[id] = b.app
-            }
+        actions = [:]
+    }
+
+    /// Register a global hotkey (e.g. "option+1"). Returns false if it couldn't parse
+    /// or the combo was already taken by another app.
+    @discardableResult
+    func register(_ key: String, action: @escaping () -> Void) -> Bool {
+        guard let (code, mods) = Self.parse(key) else { return false }
+        let id = nextID; nextID += 1
+        let hotID = EventHotKeyID(signature: 0x524E4348 /* 'RNCH' */, id: id)
+        var ref: EventHotKeyRef?
+        guard RegisterEventHotKey(code, mods, hotID, GetApplicationEventTarget(), 0, &ref) == noErr else {
+            return false
         }
+        refs.append(ref)
+        actions[id] = action
+        return true
     }
 
     private func installHandler() {
@@ -40,22 +43,14 @@ final class HotKeyManager {
             GetEventParameter(event, EventParamName(kEventParamDirectObject),
                               EventParamType(typeEventHotKeyID), nil,
                               MemoryLayout<EventHotKeyID>.size, nil, &hotID)
-            mgr.launch(id: hotID.id)
+            mgr.actions[hotID.id]?()
             return noErr
         }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), &handler)
     }
 
-    private func launch(id: UInt32) {
-        guard let name = appForID[id] else { return }
-        if let running = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == name }) {
-            running.activate(options: [.activateAllWindows])
-        } else {
-            NSWorkspace.shared.launchApplication(name)
-        }
-    }
-
-    // "option+1", "cmd shift k" -> (keyCode, modifierMask)
-    private func parse(_ s: String) -> (UInt32, UInt32)? {
+    /// "option+1", "cmd shift k" -> (keyCode, modifierMask). Also usable by callers
+    /// that just want to validate/parse a shortcut string.
+    static func parse(_ s: String) -> (UInt32, UInt32)? {
         var mods: UInt32 = 0
         var keyName: String?
         for raw in s.lowercased().split(whereSeparator: { $0 == "+" || $0 == " " }) {
@@ -67,7 +62,7 @@ final class HotKeyManager {
             case let other: keyName = other
             }
         }
-        guard let name = keyName, let code = Self.keyCodes[name] else { return nil }
+        guard let name = keyName, let code = keyCodes[name] else { return nil }
         return (UInt32(code), mods)
     }
 

@@ -6,4 +6,7 @@
 /* luaL_newstate and LUA_REGISTRYINDEX are macros — wrap them so Swift can use them. */
 static inline lua_State *ln_newstate(void) { return luaL_newstate(); }
 static inline int ln_registryindex(void) { return LUA_REGISTRYINDEX; }
+/* Per-state extra space: a pointer-sized slot we use to reach the Swift engine
+   from inside C callbacks. lua_getextraspace is a macro. */
+static inline void *ln_extraspace(lua_State *L) { return lua_getextraspace(L); }
 #endif

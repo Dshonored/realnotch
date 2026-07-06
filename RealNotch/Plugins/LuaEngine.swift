@@ -6,6 +6,8 @@ struct PluginRow: Identifiable {
     let id = UUID()
     let title: String
     let subtitle: String?
+    /// Registry ref of a Lua `action` function to call when the row is clicked.
+    let actionRef: Int32?
 }
 
 /// A loaded Lua plugin: metadata + a registry ref to its module table.
@@ -23,14 +25,34 @@ final class LuaPlugin: Identifiable {
     }
 }
 
+// Reachable from non-capturing C callbacks via the state's extra space.
+private func engine(from L: OpaquePointer?) -> LuaEngine? {
+    guard let L, let raw = ln_extraspace(L)?.load(as: UnsafeMutableRawPointer?.self) else { return nil }
+    return Unmanaged<LuaEngine>.fromOpaque(raw).takeUnretainedValue()
+}
+
+private func hostLaunch(_ name: String) {
+    if let running = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == name }) {
+        running.activate(options: [.activateAllWindows])
+    } else {
+        NSWorkspace.shared.launchApplication(name)
+    }
+}
+
 /// A sandboxed Lua 5.4 runtime. Opens only base/table/string/math/utf8 (no file,
-/// os, or dynamic-library access), exposes a tiny read-only `notch` host API, and
-/// runs plugin `render()` functions. Not thread-safe — only touched on the main thread.
+/// os, or dynamic-library access), exposes the `notch` host API, and runs plugin
+/// render()/action/hotkey functions. Not thread-safe — only touched on the main thread.
 final class LuaEngine {
     private let L: OpaquePointer
+    private let hotkeys = HotKeyManager()
+    private var hotkeyRefs: [Int32] = []
+    private var actionRefs: [Int32: [Int32]] = [:] // pluginRef -> row action refs
 
     init() {
         L = ln_newstate()
+        // Stash a pointer to self so C callbacks can reach the engine.
+        ln_extraspace(L)?.storeBytes(of: Unmanaged.passUnretained(self).toOpaque(),
+                                     as: UnsafeMutableRawPointer.self)
         openSafeLibs()
         installHostAPI()
     }
@@ -49,29 +71,42 @@ final class LuaEngine {
         }
     }
 
-    /// notch.clipboard() -> string, notch.time() -> number
+    /// The `notch` host table: clipboard(), time(), launch(app), hotkey(key, fn).
     private func installHostAPI() {
-        lua_createtable(L, 0, 2)
+        lua_createtable(L, 0, 4)
 
-        let clip: lua_CFunction = { l in
+        func set(_ name: String, _ fn: lua_CFunction) {
+            lua_pushcclosure(L, fn, 0)
+            lua_setfield(L, -2, name)
+        }
+
+        set("clipboard") { l in
             let s = NSPasteboard.general.string(forType: .string) ?? ""
             _ = s.withCString { lua_pushstring(l, $0) }
             return 1
         }
-        lua_pushcclosure(L, clip, 0)
-        lua_setfield(L, -2, "clipboard")
-
-        let time: lua_CFunction = { l in
+        set("time") { l in
             lua_pushnumber(l, Date().timeIntervalSince1970)
             return 1
         }
-        lua_pushcclosure(L, time, 0)
-        lua_setfield(L, -2, "time")
+        set("launch") { l in
+            if let c = lua_tolstring(l, 1, nil) { hostLaunch(String(cString: c)) }
+            return 0
+        }
+        set("hotkey") { l in
+            guard let c = lua_tolstring(l, 1, nil), lua_type(l, 2) == LUA_TFUNCTION else { return 0 }
+            let key = String(cString: c)
+            lua_pushvalue(l, 2)                        // copy fn to top
+            let ref = luaL_ref(l, ln_registryindex())  // pops copy, stores ref
+            engine(from: l)?.registerHotkey(key: key, fnRef: ref)
+            return 0
+        }
 
         lua_setglobal(L, "notch")
     }
 
-    /// Load a plugin file. Returns its metadata, or nil on a syntax/runtime error.
+    // MARK: loading
+
     func load(path: String) -> LuaPlugin? {
         guard luaL_loadfilex(L, path, nil) == LUA_OK else { logError(path); pop(1); return nil }
         guard lua_pcallk(L, 0, 1, 0, 0, nil) == LUA_OK else { logError(path); pop(1); return nil }
@@ -79,12 +114,10 @@ final class LuaEngine {
         let fallback = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
         let name = field(-1, "name") ?? fallback
         let icon = field(-1, "icon") ?? "puzzlepiece.extension"
-
         lua_getfield(L, -1, "render")
         let hasRender = lua_type(L, -1) == LUA_TFUNCTION
         pop(1)
-
-        let ref = luaL_ref(L, ln_registryindex()) // pops the module table, stores a ref
+        let ref = luaL_ref(L, ln_registryindex())
         return LuaPlugin(name: name, icon: icon, path: path, ref: ref, hasRender: hasRender)
     }
 
@@ -92,15 +125,30 @@ final class LuaEngine {
         luaL_unref(L, ln_registryindex(), plugin.ref)
     }
 
-    /// Call the plugin's render() and collect its rows.
+    /// Before reloading all plugins: drop plugin hotkeys and stale action refs so a
+    /// plugin's top-level `notch.hotkey(...)` doesn't stack up on every reload.
+    func resetForReload() {
+        hotkeys.unregisterAll()
+        for r in hotkeyRefs { luaL_unref(L, ln_registryindex(), r) }
+        hotkeyRefs = []
+        for refs in actionRefs.values { for r in refs { luaL_unref(L, ln_registryindex(), r) } }
+        actionRefs = [:]
+    }
+
+    // MARK: running
+
     func render(_ plugin: LuaPlugin) -> [PluginRow] {
-        lua_rawgeti(L, ln_registryindex(), lua_Integer(plugin.ref)) // module table
+        // Free last render's action refs for this plugin.
+        for r in actionRefs[plugin.ref] ?? [] { luaL_unref(L, ln_registryindex(), r) }
+        actionRefs[plugin.ref] = []
+
+        lua_rawgeti(L, ln_registryindex(), lua_Integer(plugin.ref))
         defer { pop(1) }
         guard lua_type(L, -1) == LUA_TTABLE else { return [] }
         lua_getfield(L, -1, "render")
         guard lua_type(L, -1) == LUA_TFUNCTION else { pop(1); return [] }
         guard lua_pcallk(L, 0, 1, 0, 0, nil) == LUA_OK else { logError(plugin.name); pop(1); return [] }
-        defer { pop(1) } // the rows table
+        defer { pop(1) }
         guard lua_type(L, -1) == LUA_TTABLE else { return [] }
 
         var rows: [PluginRow] = []
@@ -109,14 +157,40 @@ final class LuaEngine {
         while i <= n {
             lua_geti(L, -1, i)
             if lua_type(L, -1) == LUA_TTABLE {
-                rows.append(PluginRow(title: field(-1, "title") ?? "", subtitle: field(-1, "subtitle")))
+                let title = field(-1, "title") ?? ""
+                let subtitle = field(-1, "subtitle")
+                var actionRef: Int32?
+                lua_getfield(L, -1, "action")
+                if lua_type(L, -1) == LUA_TFUNCTION {
+                    lua_pushvalue(L, -1)
+                    let r = luaL_ref(L, ln_registryindex())
+                    actionRef = r
+                    actionRefs[plugin.ref, default: []].append(r)
+                }
+                pop(1) // action field
+                rows.append(PluginRow(title: title, subtitle: subtitle, actionRef: actionRef))
             } else if let s = string(at: -1) {
-                rows.append(PluginRow(title: s, subtitle: nil))
+                rows.append(PluginRow(title: s, subtitle: nil, actionRef: nil))
             }
             pop(1)
             i += 1
         }
         return rows
+    }
+
+    /// Call a stored Lua function (a row action or a hotkey callback).
+    func callRef(_ ref: Int32) {
+        lua_rawgeti(L, ln_registryindex(), lua_Integer(ref))
+        if lua_type(L, -1) == LUA_TFUNCTION {
+            if lua_pcallk(L, 0, 0, 0, 0, nil) != LUA_OK { logError("action"); pop(1) }
+        } else {
+            pop(1)
+        }
+    }
+
+    fileprivate func registerHotkey(key: String, fnRef: Int32) {
+        hotkeyRefs.append(fnRef)
+        hotkeys.register(key) { [weak self] in self?.callRef(fnRef) }
     }
 
     // MARK: helpers

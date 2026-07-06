@@ -16,27 +16,44 @@ struct PluginTabView: View {
         } else {
             VStack(spacing: 7) {
                 ForEach(rows) { row in
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(row.title)
-                            .font(theme.font(theme.typography.itemSize))
-                            .foregroundStyle(Color(hex: theme.colors.textPrimary))
-                            .lineLimit(1)
-                        if let s = row.subtitle {
-                            Text(s)
-                                .font(theme.font(theme.typography.captionSize))
-                                .foregroundStyle(Color(hex: theme.colors.textSecondary))
-                                .lineLimit(1)
-                        }
+                    if let ref = row.actionRef {
+                        Button { plugins.runAction(ref) } label: { rowBody(row, tappable: true) }
+                            .buttonStyle(.plain)
+                    } else {
+                        rowBody(row, tappable: false)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 9)
-                    .background(
-                        RoundedRectangle(cornerRadius: theme.shape.itemCornerRadius)
-                            .fill(Color(hex: theme.colors.surface))
-                    )
                 }
             }
         }
+    }
+
+    private func rowBody(_ row: PluginRow, tappable: Bool) -> some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(row.title)
+                    .font(theme.font(theme.typography.itemSize))
+                    .foregroundStyle(Color(hex: theme.colors.textPrimary))
+                    .lineLimit(1)
+                if let s = row.subtitle {
+                    Text(s)
+                        .font(theme.font(theme.typography.captionSize))
+                        .foregroundStyle(Color(hex: theme.colors.textSecondary))
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: 0)
+            if tappable {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Color(hex: theme.colors.textSecondary))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 11)
+        .padding(.vertical, 9)
+        .background(
+            RoundedRectangle(cornerRadius: theme.shape.itemCornerRadius)
+                .fill(Color(hex: theme.colors.surface))
+        )
     }
 }

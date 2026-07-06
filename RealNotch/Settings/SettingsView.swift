@@ -14,6 +14,29 @@ struct SettingsView: View {
     @State private var newKey = ""
     @State private var newApp = ""
     @State private var newPath: String?
+    @State private var apps: [AppInfo] = []
+
+    private var conflictApp: String? {
+        guard !newKey.isEmpty, let bound = launcher.appBound(to: newKey), bound != newApp else { return nil }
+        return bound
+    }
+
+    private var appPicker: some View {
+        Menu {
+            ForEach(apps) { a in
+                Button { newApp = a.name; newPath = a.path } label: {
+                    Label { Text(a.name) } icon: { Image(nsImage: a.icon) }
+                }
+            }
+            Divider()
+            Button("Browse…") { if let (n, p) = pickApp() { newApp = n; newPath = p } }
+        } label: {
+            HStack(spacing: 6) {
+                if let p = newPath { Image(nsImage: NSWorkspace.shared.icon(forFile: p)).resizable().frame(width: 16, height: 16) }
+                Text(newApp.isEmpty ? "Choose app…" : newApp)
+            }
+        }
+    }
     @AppStorage("openOnHover") private var openOnHover = true
     @AppStorage("hoverDelayMs") private var hoverDelayMs = 300
 
@@ -56,9 +79,11 @@ struct SettingsView: View {
             Section("App Launcher") {
                 ForEach(launcher.bindings) { b in
                     HStack {
-                        Text(Shortcut.display(b.key))
-                            .font(.system(.body, design: .rounded).weight(.semibold))
-                            .frame(minWidth: 44, alignment: .leading)
+                        // Click the shortcut to re-record it in place.
+                        ShortcutRecorder(key: Binding(
+                            get: { b.key }, set: { launcher.updateKey(b, to: $0) }
+                        ))
+                        .frame(width: 130)
                         if let icon = b.icon {
                             Image(nsImage: icon).resizable().frame(width: 18, height: 18)
                         }
@@ -72,14 +97,16 @@ struct SettingsView: View {
                 }
                 HStack {
                     ShortcutRecorder(key: $newKey)
-                    TextField("App name", text: $newApp)
-                    Button("Choose…") {
-                        if let (n, p) = pickApp() { newApp = n; newPath = p }
-                    }
+                    appPicker
                     Button("Add") { addBinding() }
-                        .disabled(newKey.isEmpty || newApp.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .disabled(newKey.isEmpty || newApp.isEmpty)
                 }
-                Text("Record a shortcut and pick an app — the hotkey works everywhere.")
+                if let clash = conflictApp {
+                    Label("\(Shortcut.display(newKey)) already opens \(clash) — Add replaces it.",
+                          systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption).foregroundStyle(.orange)
+                }
+                Text("Record a shortcut, pick an app. Press the shortcut again to hide the app.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -110,7 +137,10 @@ struct SettingsView: View {
         // A grouped Form has no intrinsic height in an NSHostingController, so the
         // window collapses to its title bar without an explicit size.
         .frame(width: 480, height: 620)
-        .onAppear { maxItems = clipboard.maxItems }
+        .onAppear {
+            maxItems = clipboard.maxItems
+            apps = InstalledApps.all()
+        }
     }
 
     private func addBinding() {

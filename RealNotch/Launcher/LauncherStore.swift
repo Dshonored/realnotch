@@ -38,8 +38,7 @@ final class LauncherStore {
     }
 
     func add(app: String, key: String, path: String? = nil) {
-        // Replace any existing binding on the same key.
-        bindings.removeAll { $0.key == key }
+        bindings.removeAll { $0.key == key } // one app per shortcut
         bindings.append(AppBinding(app: app, key: key, path: path))
         save(); register()
     }
@@ -49,9 +48,27 @@ final class LauncherStore {
         save(); register()
     }
 
+    /// Change a binding's shortcut in place (re-record).
+    func updateKey(_ binding: AppBinding, to key: String) {
+        guard let i = bindings.firstIndex(where: { $0.id == binding.id }) else { return }
+        bindings.removeAll { $0.key == key && $0.id != binding.id }
+        bindings[i].key = key
+        save(); register()
+    }
+
+    /// The app already bound to this shortcut, if any (for conflict warnings).
+    func appBound(to key: String) -> String? {
+        bindings.first { $0.key == key }?.app
+    }
+
+    /// Focus the app — or hide it if it's already frontmost (toggle).
     func launch(_ binding: AppBinding) {
         if let running = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == binding.app }) {
-            running.activate(options: [.activateAllWindows])
+            if running.isActive {
+                running.hide()
+            } else {
+                running.activate(options: [.activateAllWindows])
+            }
         } else if let path = binding.path {
             NSWorkspace.shared.open(URL(fileURLWithPath: path))
         } else {
@@ -60,7 +77,10 @@ final class LauncherStore {
     }
 
     private func register() {
-        hotkeys.setBindings(bindings.map { .init(key: $0.key, app: $0.app) })
+        hotkeys.unregisterAll()
+        for b in bindings {
+            hotkeys.register(b.key) { [weak self] in self?.launch(b) }
+        }
     }
 
     private func load() {
