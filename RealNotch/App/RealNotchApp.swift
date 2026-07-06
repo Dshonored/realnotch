@@ -6,7 +6,7 @@ struct RealNotchApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     var body: some Scene {
-        MenuBarExtra("RealNotch", systemImage: "sparkles.rectangle.stack") {
+        MenuBarExtra("RealNotch", image: "MenuBarIcon") {
             Button("Settings…") { delegate.settingsController?.show() }
                 .keyboardShortcut(",")
             Divider()
