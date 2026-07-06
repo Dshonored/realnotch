@@ -61,6 +61,17 @@ final class LauncherStore {
         bindings.first { $0.key == key }?.app
     }
 
+    /// First free ⌥1…⌥9 for the quick-add flow in the notch.
+    func nextFreeKey() -> String? {
+        (1...9).map { "option+\($0)" }.first { key in !bindings.contains { $0.key == key } }
+    }
+
+    /// Quick-add from the notch: auto-assign the next ⌥number.
+    func quickAdd(app: String, path: String?) {
+        guard let key = nextFreeKey() else { return }
+        add(app: app, key: key, path: path)
+    }
+
     /// Focus the app — or hide it if it's already frontmost (toggle).
     func launch(_ binding: AppBinding) {
         if let running = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == binding.app }) {
