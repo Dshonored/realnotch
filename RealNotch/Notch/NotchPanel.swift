@@ -37,16 +37,20 @@ struct NotchPanel: View {
     // MARK: header
 
     private var header: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             cameraDot
-                .padding(.trailing, 4)
-            ForEach(visibleTabs) { tab in
-                tabPill(tab)
+            // Scroll the tabs horizontally so many of them never wrap/stack.
+            ScrollView(.horizontal) {
+                HStack(spacing: 6) {
+                    ForEach(visibleTabs) { tab in
+                        tabPill(tab)
+                    }
+                }
             }
+            .scrollIndicators(.hidden)
             Circle()
                 .fill(Color(hex: theme.colors.success))
                 .frame(width: 5, height: 5)
-                .padding(.leading, 2)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -69,6 +73,8 @@ struct NotchPanel: View {
             if active {
                 Text(tab.title)
                     .font(theme.font(theme.typography.itemSize, weight: .semibold))
+                    .lineLimit(1)
+                    .fixedSize()
             }
         }
             .foregroundStyle(active

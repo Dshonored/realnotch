@@ -6,6 +6,10 @@ struct PluginRow: Identifiable {
     let id = UUID()
     let title: String
     let subtitle: String?
+    let icon: String?      // SF Symbol name
+    let color: String?     // hex, tints icon / badge / progress
+    let badge: String?     // trailing pill text
+    let progress: Double?  // 0…1 bar under the row
     /// Registry ref of a Lua `action` function to call when the row is clicked.
     let actionRef: Int32?
 }
@@ -159,6 +163,10 @@ final class LuaEngine {
             if lua_type(L, -1) == LUA_TTABLE {
                 let title = field(-1, "title") ?? ""
                 let subtitle = field(-1, "subtitle")
+                let icon = field(-1, "icon")
+                let color = field(-1, "color")
+                let badge = field(-1, "badge")
+                let progress = number(-1, "progress")
                 var actionRef: Int32?
                 lua_getfield(L, -1, "action")
                 if lua_type(L, -1) == LUA_TFUNCTION {
@@ -168,9 +176,11 @@ final class LuaEngine {
                     actionRefs[plugin.ref, default: []].append(r)
                 }
                 pop(1) // action field
-                rows.append(PluginRow(title: title, subtitle: subtitle, actionRef: actionRef))
+                rows.append(PluginRow(title: title, subtitle: subtitle, icon: icon,
+                                      color: color, badge: badge, progress: progress, actionRef: actionRef))
             } else if let s = string(at: -1) {
-                rows.append(PluginRow(title: s, subtitle: nil, actionRef: nil))
+                rows.append(PluginRow(title: s, subtitle: nil, icon: nil,
+                                      color: nil, badge: nil, progress: nil, actionRef: nil))
             }
             pop(1)
             i += 1
@@ -199,6 +209,13 @@ final class LuaEngine {
         lua_getfield(L, tableIndex, key)
         defer { pop(1) }
         return string(at: -1)
+    }
+
+    private func number(_ tableIndex: Int32, _ key: String) -> Double? {
+        lua_getfield(L, tableIndex, key)
+        defer { pop(1) }
+        guard lua_type(L, -1) == LUA_TNUMBER else { return nil }
+        return lua_tonumberx(L, -1, nil)
     }
 
     private func string(at index: Int32) -> String? {

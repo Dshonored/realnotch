@@ -45,6 +45,27 @@ Nothing is installed by default. Add plugins yourself:
 - **Settings → Plugins → Install Plugin (.zip)…**, or
 - drop `.lua` files straight into the folder above.
 
+## Styling rows
+
+A row is a table. Beyond `title`/`subtitle`, you can style it — the host owns the
+layout (so it stays consistent and skin-friendly), but you control the accents:
+
+| Field | Effect |
+|---|---|
+| `icon` | a leading [SF Symbol](https://developer.apple.com/sf-symbols/) |
+| `color` | hex (`"#FF6B35"`) — tints the icon, badge, and progress bar |
+| `badge` | a small trailing pill of text |
+| `progress` | `0…1` — a bar under the row |
+| `action` | a function; makes the row clickable |
+
+```lua
+{ title = "Downloading", subtitle = "42%", icon = "arrow.down.circle.fill",
+  color = "#0A84FF", badge = "2", progress = 0.42 }
+```
+
+The bundled `showcase.lua` example shows all of these together. A bare string is
+also a valid row (just a title).
+
 ## Interactive rows
 
 Give a row an `action` function and it becomes clickable in the notch:
