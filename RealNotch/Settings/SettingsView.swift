@@ -8,7 +8,9 @@ struct SettingsView: View {
     let clipboard: ClipboardStore
     let launcher: LauncherStore
     let plugins: PluginStore
+    let updater: Updater
 
+    @AppStorage(Updater.autoCheckKey) private var autoCheckUpdates = true
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var maxItems = 200
     @State private var newKey = ""
@@ -62,6 +64,17 @@ struct SettingsView: View {
                     .onChange(of: maxItems) { clipboard.maxItems = maxItems }
 
                 Button("Clear History") { clipboard.clear() }
+            }
+
+            Section("Updates") {
+                LabeledContent("Version", value: updater.currentVersion)
+                Toggle("Automatically check for updates", isOn: $autoCheckUpdates)
+                HStack {
+                    updateStatus
+                    Spacer()
+                    Button("Check Now") { updater.check(userInitiated: true, silent: true) }
+                        .disabled(updater.isBusy)
+                }
             }
 
             Section("Notch") {
@@ -162,6 +175,53 @@ struct SettingsView: View {
             maxItems = clipboard.maxItems
             apps = InstalledApps.all()
         }
+    }
+
+    @ViewBuilder
+    private var updateStatus: some View {
+        switch updater.state {
+        case .idle:
+            if let checked = updater.lastChecked {
+                lastCheckedText(checked)
+            }
+        case .checking:
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.small)
+                Text("Checking\u{2026}").foregroundStyle(.secondary)
+            }
+        case .upToDate:
+            VStack(alignment: .leading, spacing: 2) {
+                Label("RealNotch is up to date", systemImage: "checkmark.circle")
+                if let checked = updater.lastChecked { lastCheckedText(checked) }
+            }
+        case .available(let release):
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Version \(release.version) is available")
+                HStack {
+                    Button("Install v\(release.version)") { updater.install(release) }
+                    Link("Release Notes", destination: release.htmlURL)
+                }
+            }
+        case .downloading(let progress):
+            ProgressView("Downloading\u{2026}", value: progress, total: 1)
+                .frame(maxWidth: 220)
+        case .installing:
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.small)
+                Text("Installing\u{2026}").foregroundStyle(.secondary)
+            }
+        case .failed(let message):
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func lastCheckedText(_ date: Date) -> some View {
+        Text("Last checked \(date.formatted(.relative(presentation: .named)))")
+            .font(.caption)
+            .foregroundStyle(.secondary)
     }
 
     private func addBinding() {

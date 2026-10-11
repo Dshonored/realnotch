@@ -7,6 +7,7 @@ struct RealNotchApp: App {
 
     var body: some Scene {
         MenuBarExtra("RealNotch", image: "MenuBarIcon") {
+            Button("Check for Updates…") { delegate.updater.check(userInitiated: true) }
             Button("Settings…") { delegate.settingsController?.show() }
                 .keyboardShortcut(",")
             Divider()
@@ -16,6 +17,7 @@ struct RealNotchApp: App {
     }
 }
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     // NSApp.delegate is SwiftUI's internal wrapper, not this object — casting it fails.
     private(set) static weak var shared: AppDelegate?
@@ -29,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let agentStore = AgentStore()
     let pluginStore = PluginStore()
     let launcherStore = LauncherStore()
+    let updater = Updater()
     private(set) var settingsController: SettingsWindowController?
     private var monitor: ClipboardMonitor?
     private var windowController: NotchWindowController?
@@ -37,8 +40,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppDelegate.shared = self
         settingsController = SettingsWindowController(
             themeStore: themeStore, clipboard: clipboardStore,
-            launcher: launcherStore, plugins: pluginStore
+            launcher: launcherStore, plugins: pluginStore, updater: updater
         )
+        updater.start()
 
         let monitor = ClipboardMonitor(store: clipboardStore)
         monitor.start()

@@ -11,12 +11,15 @@ final class SettingsWindowController {
     private let clipboard: ClipboardStore
     private let launcher: LauncherStore
     private let plugins: PluginStore
+    private let updater: Updater
 
-    init(themeStore: ThemeStore, clipboard: ClipboardStore, launcher: LauncherStore, plugins: PluginStore) {
+    init(themeStore: ThemeStore, clipboard: ClipboardStore, launcher: LauncherStore,
+         plugins: PluginStore, updater: Updater) {
         self.themeStore = themeStore
         self.clipboard = clipboard
         self.launcher = launcher
         self.plugins = plugins
+        self.updater = updater
     }
 
     func show() {
@@ -29,7 +32,7 @@ final class SettingsWindowController {
 
         let hosting = NSHostingController(
             rootView: SettingsView(themeStore: themeStore, clipboard: clipboard,
-                                   launcher: launcher, plugins: plugins)
+                                   launcher: launcher, plugins: plugins, updater: updater)
         )
         let w = NSWindow(contentViewController: hosting)
         w.title = "RealNotch Settings"
