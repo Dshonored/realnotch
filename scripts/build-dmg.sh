@@ -4,13 +4,20 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-VERSION="${1:-0.1.0}"
+VERSION="${1:?usage: $0 <version>  e.g. $0 0.9.0 (no leading v)}"
+VERSION="${VERSION#v}"
 DD="build/dd"
 STAGE="build/stage"
 APP="$DD/Build/Products/Release/RealNotch.app"
 
 echo "› Building Release…"
-xcodebuild -scheme RealNotch -configuration Release -derivedDataPath "$DD" build >/dev/null
+# Stamp the release version into the bundle — the in-app updater compares
+# CFBundleShortVersionString against the GitHub tag (vX.Y.Z).
+xcodebuild -scheme RealNotch -configuration Release -derivedDataPath "$DD" \
+  MARKETING_VERSION="$VERSION" build >/dev/null
+
+BUILT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
+[ "$BUILT" = "$VERSION" ] || { echo "✗ built version $BUILT != $VERSION"; exit 1; }
 
 echo "› Staging app…"
 rm -rf "$STAGE" && mkdir -p "$STAGE" dist

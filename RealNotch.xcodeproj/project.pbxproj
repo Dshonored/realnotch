@@ -251,7 +251,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.8.1;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/RealNotch/Lua/vendor";
 				OTHER_CFLAGS = "-DLUA_USE_MACOSX";
 				SWIFT_OBJC_BRIDGING_HEADER = "RealNotch/Lua/lua-bridge.h";
@@ -277,7 +277,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.8.1;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/RealNotch/Lua/vendor";
 				OTHER_CFLAGS = "-DLUA_USE_MACOSX";
 				SWIFT_OBJC_BRIDGING_HEADER = "RealNotch/Lua/lua-bridge.h";
@@ -292,7 +292,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.8.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.realnotch.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RealNotch.app/Contents/MacOS/RealNotch";
@@ -305,7 +305,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.8.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.realnotch.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RealNotch.app/Contents/MacOS/RealNotch";
