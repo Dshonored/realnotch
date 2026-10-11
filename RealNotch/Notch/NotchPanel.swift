@@ -11,6 +11,8 @@ struct NotchPanel: View {
     let plugins: PluginStore
     let launcher: LauncherStore
     let width: CGFloat
+    /// Fixed section height so the open panel never resizes between tabs.
+    let bodyHeight: CGFloat
     /// Reserved for the physical notch — content starts below it so the header
     /// (tabs) isn't hidden behind the hardware notch on notch Macs.
     let notchHeight: CGFloat
@@ -18,6 +20,14 @@ struct NotchPanel: View {
     let openSettings: () -> Void
 
     @Environment(\.theme) private var theme
+
+    // User-adjustable open-panel size (Settings > Notch). Ranges keep the panel
+    // inside the 640x500 hosting window: notch + header + footer take ~130pt,
+    // so the body tops out at 330. Shorter tabs sit top-aligned, taller ones clip.
+    static let defaultWidth: Double = 440
+    static let widthRange: ClosedRange<Double> = 360...620
+    static let defaultBodyHeight: Double = 290
+    static let bodyHeightRange: ClosedRange<Double> = 180...330
 
     // Background/clip/border are owned by the animated container in NotchRootView
     // so the panel can grow out of the notch smoothly.
@@ -27,6 +37,12 @@ struct NotchPanel: View {
             header
             divider
             sectionBody
+                // A fixed frame (not min/max) always proposes exactly bodyHeight —
+                // the container's vertical fixedSize would otherwise pass a nil
+                // proposal and let lists size to their ideal height.
+                .frame(maxWidth: .infinity, alignment: .top)
+                .frame(height: bodyHeight, alignment: .top)
+                .clipped()
                 .padding(12)
             divider
             footer

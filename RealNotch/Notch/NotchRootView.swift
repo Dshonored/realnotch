@@ -49,22 +49,22 @@ private struct NotchContainer: View {
 
     @AppStorage("openOnHover") private var openOnHover = true
     @AppStorage("hoverDelayMs") private var hoverDelayMs = 300
+    @AppStorage("panelWidth") private var panelWidth = NotchPanel.defaultWidth
+    @AppStorage("panelBodyHeight") private var panelBodyHeight = NotchPanel.defaultBodyHeight
 
-    private let expandedWidth: CGFloat = 440
+    // Clamped on read so a bad stored value can't overflow the hosting window.
+    private var expandedWidth: CGFloat {
+        CGFloat(panelWidth.clamped(to: NotchPanel.widthRange))
+    }
+    private var bodyHeight: CGFloat {
+        CGFloat(panelBodyHeight.clamped(to: NotchPanel.bodyHeightRange))
+    }
     private let closeDelayMs = 120
     private let notchWidth: CGFloat
     private let notchHeight: CGFloat
 
-    // Sized to content so the idle glyphs clear the physical notch — a fixed
-    // wing overflows and clips once agents + music + clipboard all show at once.
-    private var collapsedWidth: CGFloat {
-        CollapsedNotchView.idealWidth(
-            clipboardCount: clipboard.items.count,
-            keepAwake: caffeine.isActive,
-            agentsWaiting: agents.waitingCount,
-            notchWidth: notchWidth
-        )
-    }
+    // The idle bar is exactly the physical notch — no wings.
+    private var collapsedWidth: CGFloat { notchWidth }
 
     init(appState: AppState, clipboard: ClipboardStore, notes: NotesStore,
          nowPlaying: NowPlaying, caffeine: CaffeineManager, agents: AgentStore,
@@ -94,13 +94,7 @@ private struct NotchContainer: View {
             // gives a real "grow out of the notch" reveal instead of a pop.
             panelBackground(shape, expanded: expanded)
 
-            CollapsedNotchView(
-                clipboardCount: clipboard.items.count,
-                isPlaying: nowPlaying.isPlaying,
-                keepAwake: caffeine.isActive,
-                agentsWaiting: agents.waitingCount,
-                notchWidth: notchWidth
-            )
+            CollapsedNotchView(notchWidth: notchWidth)
                 .frame(width: collapsedWidth, height: notchHeight)
                 .opacity(expanded ? 0 : 1)
 
@@ -108,10 +102,13 @@ private struct NotchContainer: View {
                 appState: appState, clipboard: clipboard, notes: notes,
                 nowPlaying: nowPlaying, caffeine: caffeine, agents: agents,
                 plugins: plugins, launcher: launcher,
-                width: expandedWidth, notchHeight: notchHeight,
+                width: expandedWidth, bodyHeight: bodyHeight, notchHeight: notchHeight,
                 onCopy: showToast, openSettings: openAppSettings
             )
             .fixedSize(horizontal: false, vertical: true)
+            // The body region is fixed (user-set bodyHeight), so this reports one
+            // constant per theme — measured rather than hardcoded so header/footer
+            // font sizes from the skin are still honored.
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelHeight = $0 }
             .opacity(expanded ? 1 : 0)
             .allowsHitTesting(expanded)
@@ -126,6 +123,7 @@ private struct NotchContainer: View {
         .contentShape(shape)
         .animation(theme.spring, value: expanded)
         .animation(theme.spring, value: panelHeight)
+        .animation(theme.spring, value: expandedWidth)
         .animation(.easeOut(duration: 0.5), value: glow)
         .onTapGesture { if !expanded { appState.isExpanded = true } }
         .onHover { hovering in
@@ -183,5 +181,11 @@ private struct NotchContainer: View {
             withAnimation { copyToast = nil }
             glow = false
         }
+    }
+}
+
+extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
+        min(max(self, range.lowerBound), range.upperBound)
     }
 }

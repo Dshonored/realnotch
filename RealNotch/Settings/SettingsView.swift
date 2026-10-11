@@ -39,6 +39,8 @@ struct SettingsView: View {
     }
     @AppStorage("openOnHover") private var openOnHover = true
     @AppStorage("hoverDelayMs") private var hoverDelayMs = 300
+    @AppStorage("panelWidth") private var panelWidth = NotchPanel.defaultWidth
+    @AppStorage("panelBodyHeight") private var panelBodyHeight = NotchPanel.defaultBodyHeight
 
     var body: some View {
         Form {
@@ -73,6 +75,25 @@ struct SettingsView: View {
                     Text("Click the notch to open it.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                LabeledContent("Panel width: \(Int(panelWidth)) pt") {
+                    Slider(value: $panelWidth, in: NotchPanel.widthRange, step: 10)
+                }
+                LabeledContent("Panel height: \(Int(panelBodyHeight)) pt") {
+                    Slider(value: $panelBodyHeight, in: NotchPanel.bodyHeightRange, step: 10)
+                }
+                HStack {
+                    Text("Size of the open notch. It stays the same on every tab.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Reset Size") {
+                        panelWidth = NotchPanel.defaultWidth
+                        panelBodyHeight = NotchPanel.defaultBodyHeight
+                    }
+                    .disabled(panelWidth == NotchPanel.defaultWidth
+                              && panelBodyHeight == NotchPanel.defaultBodyHeight)
                 }
             }
 

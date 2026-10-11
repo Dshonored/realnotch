@@ -37,7 +37,7 @@ struct ClipboardHistoryView: View {
                 Text("Copy something — it shows up here.")
                     .font(theme.font(theme.typography.itemSize))
                     .foregroundStyle(Color(hex: theme.colors.textSecondary))
-                    .frame(maxWidth: .infinity, minHeight: 80)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 7) {
@@ -46,7 +46,7 @@ struct ClipboardHistoryView: View {
                         }
                     }
                 }
-                .frame(maxHeight: 260)
+                .frame(maxHeight: .infinity)
                 .scrollIndicators(.never)
             }
         }
