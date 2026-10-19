@@ -1,12 +1,13 @@
 import SwiftUI
 
-/// The grown notch: header tabs (hover to switch) · section body · Keep-Awake footer.
+/// The grown notch: header tabs (hover to switch) · section body · Keep-Awake / Lid-Closed footer.
 struct NotchPanel: View {
     let appState: AppState
     let clipboard: ClipboardStore
     let notes: NotesStore
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
+    let lidAwake: LidAwakeManager
     let agents: AgentStore
     let plugins: PluginStore
     let launcher: LauncherStore
@@ -137,23 +138,26 @@ struct NotchPanel: View {
 
     // MARK: footer
 
+    // Two compact switches side by side so the footer keeps its height.
     private var footer: some View {
-        HStack(spacing: 9) {
-            Image(systemName: caffeine.isActive ? "moon.fill" : "moon")
-                .font(.system(size: 14))
-                .foregroundStyle(caffeine.isActive
-                    ? Color(hex: theme.colors.success)
-                    : Color(hex: theme.colors.textSecondary))
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Keep Awake")
-                    .font(theme.font(theme.typography.itemSize, weight: .semibold))
-                    .foregroundStyle(Color(hex: theme.colors.textPrimary))
-                Text(caffeine.isActive ? "On — display stays awake" : "Off")
-                    .font(theme.font(theme.typography.captionSize))
-                    .foregroundStyle(Color(hex: theme.colors.textSecondary))
-            }
-            Spacer()
-            awakeToggle
+        HStack(spacing: 10) {
+            footerSwitch(
+                title: "Keep Awake",
+                symbol: caffeine.isActive ? "moon.fill" : "moon",
+                status: caffeine.isActive ? "On" : "Off",
+                isOn: caffeine.isActive,
+                action: caffeine.toggle
+            )
+            .help("Keep the display awake while the lid is open")
+            footerSwitch(
+                title: "Lid Closed",
+                symbol: "laptopcomputer",
+                status: lidAwake.isBusy ? "…" : (lidAwake.isActive ? "On" : "Off"),
+                isOn: lidAwake.isActive,
+                action: lidAwake.toggle
+            )
+            .help("Keep the Mac running with the lid closed. Turned off when RealNotch quits.")
+            Spacer(minLength: 0)
             Button(action: openSettings) {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 13))
@@ -168,23 +172,40 @@ struct NotchPanel: View {
         .padding(.vertical, 11)
     }
 
-    private var awakeToggle: some View {
-        Button { caffeine.toggle() } label: {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(caffeine.isActive ? Color(hex: theme.colors.success) : Color(hex: theme.colors.textPrimary).opacity(0.2))
-                .frame(width: 34, height: 20)
-                .overlay(alignment: caffeine.isActive ? .trailing : .leading) {
-                    Circle()
-                        .fill(.white)
-                        .frame(width: 16, height: 16)
-                        .padding(2)
-                        .shadow(color: .black.opacity(0.3), radius: 1, y: 1)
-                }
+    private func footerSwitch(title: String, symbol: String, status: String,
+                              isOn: Bool, action: @escaping @MainActor () -> Void) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: symbol)
+                .font(.system(size: 13))
+                .foregroundStyle(isOn
+                    ? Color(hex: theme.colors.success)
+                    : Color(hex: theme.colors.textSecondary))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(theme.font(theme.typography.itemSize, weight: .semibold))
+                    .foregroundStyle(Color(hex: theme.colors.textPrimary))
+                Text(status)
+                    .font(theme.font(theme.typography.captionSize))
+                    .foregroundStyle(Color(hex: theme.colors.textSecondary))
+            }
+            .lineLimit(1)
+            Button(action: action) {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(isOn ? Color(hex: theme.colors.success) : Color(hex: theme.colors.textPrimary).opacity(0.2))
+                    .frame(width: 34, height: 20)
+                    .overlay(alignment: isOn ? .trailing : .leading) {
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 16, height: 16)
+                            .padding(2)
+                            .shadow(color: .black.opacity(0.3), radius: 1, y: 1)
+                    }
+            }
+            .buttonStyle(.plain)
+            .animation(.easeOut(duration: 0.2), value: isOn)
+            .accessibilityLabel(title)
+            .accessibilityValue(isOn ? "On" : "Off")
         }
-        .buttonStyle(.plain)
-        .animation(.easeOut(duration: 0.2), value: caffeine.isActive)
-        .accessibilityLabel("Keep Awake")
-        .accessibilityValue(caffeine.isActive ? "On" : "Off")
     }
 
     private var divider: some View {

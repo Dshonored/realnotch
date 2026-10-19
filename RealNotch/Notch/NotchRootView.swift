@@ -17,6 +17,7 @@ struct NotchRootView: View {
     let notes: NotesStore
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
+    let lidAwake: LidAwakeManager
     let agents: AgentStore
     let plugins: PluginStore
     let launcher: LauncherStore
@@ -24,7 +25,7 @@ struct NotchRootView: View {
     var body: some View {
         NotchContainer(
             appState: appState, clipboard: clipboard,
-            notes: notes, nowPlaying: nowPlaying, caffeine: caffeine,
+            notes: notes, nowPlaying: nowPlaying, caffeine: caffeine, lidAwake: lidAwake,
             agents: agents, plugins: plugins, launcher: launcher
         )
         .environment(\.theme, themeStore.current)
@@ -37,6 +38,7 @@ private struct NotchContainer: View {
     let notes: NotesStore
     let nowPlaying: NowPlaying
     let caffeine: CaffeineManager
+    let lidAwake: LidAwakeManager
     let agents: AgentStore
     let plugins: PluginStore
     let launcher: LauncherStore
@@ -67,13 +69,14 @@ private struct NotchContainer: View {
     private var collapsedWidth: CGFloat { notchWidth }
 
     init(appState: AppState, clipboard: ClipboardStore, notes: NotesStore,
-         nowPlaying: NowPlaying, caffeine: CaffeineManager, agents: AgentStore,
+         nowPlaying: NowPlaying, caffeine: CaffeineManager, lidAwake: LidAwakeManager, agents: AgentStore,
          plugins: PluginStore, launcher: LauncherStore) {
         self.appState = appState
         self.clipboard = clipboard
         self.notes = notes
         self.nowPlaying = nowPlaying
         self.caffeine = caffeine
+        self.lidAwake = lidAwake
         self.agents = agents
         self.plugins = plugins
         self.launcher = launcher
@@ -100,7 +103,7 @@ private struct NotchContainer: View {
 
             NotchPanel(
                 appState: appState, clipboard: clipboard, notes: notes,
-                nowPlaying: nowPlaying, caffeine: caffeine, agents: agents,
+                nowPlaying: nowPlaying, caffeine: caffeine, lidAwake: lidAwake, agents: agents,
                 plugins: plugins, launcher: launcher,
                 width: expandedWidth, bodyHeight: bodyHeight, notchHeight: notchHeight,
                 onCopy: showToast, openSettings: openAppSettings

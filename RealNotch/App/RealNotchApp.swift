@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let notesStore = NotesStore()
     let nowPlaying = NowPlaying()
     let caffeine = CaffeineManager()
+    let lidAwake = LidAwakeManager()
     let agentStore = AgentStore()
     let pluginStore = PluginStore()
     let launcherStore = LauncherStore()
@@ -51,7 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowController = NotchWindowController(
             content: NotchRootView(
                 appState: appState, themeStore: themeStore, clipboard: clipboardStore,
-                notes: notesStore, nowPlaying: nowPlaying, caffeine: caffeine,
+                notes: notesStore, nowPlaying: nowPlaying, caffeine: caffeine, lidAwake: lidAwake,
                 agents: agentStore, plugins: pluginStore, launcher: launcherStore
             )
         )
@@ -61,5 +62,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clipboardStore.saveNow()
         notesStore.saveNow()
         caffeine.deactivate()
+        lidAwake.deactivateForQuit()
     }
 }
